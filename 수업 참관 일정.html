@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수업 참관 일정</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
+    </style>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+</head>
+<body class="text-slate-800 pb-12">
+
+    <!-- Header -->
+    <header class="bg-indigo-900 text-white px-6 py-4 flex justify-between items-center shadow-md">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-700 p-2.5 rounded-lg flex items-center justify-center">
+                <i class="fa-solid fa-school text-xl text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">수업 참관 일정</h1>
+                <p class="text-xs text-indigo-300">스마트 교직원 참관 협의 플랫폼</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-xs bg-indigo-950/60 px-3 py-1.5 rounded-full border border-indigo-700/50">
+                <span class="text-indigo-300">접속 권한:</span>
+                <span id="currentRoleBadge" class="bg-amber-600 px-2 py-0.5 rounded text-white font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-user-gear text-xs"></i> <span id="roleText">교사</span>
+                </span>
+            </div>
+            <div class="flex bg-indigo-950/80 p-1 rounded-lg border border-indigo-700/60 text-xs">
+                <button id="btnAdminMode" onclick="requestAdminMode()" class="px-3 py-1.5 rounded-md transition font-medium text-indigo-300 hover:text-white">관리자</button>
+                <button id="btnTeacherMode" onclick="setRole('teacher')" class="px-3 py-1.5 rounded-md transition font-medium text-white bg-indigo-600 shadow-sm">교사</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 mt-6 space-y-6">
+
+        <!-- 참관 양식 업로드 및 다운로드 바 -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+            <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-100 pb-3 mb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-file-signature text-indigo-600 text-lg"></i>
+                    <h3 class="font-bold text-slate-800 text-sm">양식 다운로드</h3>
+                </div>
+                
+                <!-- 관리자용 업로드 폼 -->
+                <div id="adminFormUploadArea" class="hidden flex items-center gap-2">
+                    <input type="file" id="formFileInput" class="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                    <button onclick="uploadDocumentForm()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium transition flex items-center gap-1 shadow-sm">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> 양식 등록
+                    </button>
+                </div>
+            </div>
+
+            <!-- 등록된 양식 리스트 -->
+            <div id="documentFormContainer" class="flex flex-wrap gap-2 text-xs">
+                <span class="text-slate-400">등록된 서류 양식이 없습니다.</span>
+            </div>
+        </div>
+
+        <!-- Control Bar -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <button onclick="changeMonth(-1)" class="p-2 hover:bg-slate-100 rounded-lg transition text-slate-600"><i class="fa-solid fa-chevron-left"></i></button>
+                <h2 id="calendarTitle" class="text-2xl font-bold text-slate-800 w-40 text-center">2026년 08월</h2>
+                <button onclick="changeMonth(1)" class="p-2 hover:bg-slate-100 rounded-lg transition text-slate-600"><i class="fa-solid fa-chevron-right"></i></button>
+                <button onclick="goToday()" class="px-3.5 py-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 rounded-md font-bold transition shadow-sm">오늘</button>
+            </div>
+
+            <div class="flex items-center gap-6 bg-slate-50 border border-slate-100 px-5 py-2 rounded-xl">
+                <div class="text-center">
+                    <span class="block text-xs text-slate-500 font-medium">등록 교원</span>
+                    <span id="countTeachers" class="text-lg font-bold text-indigo-600">0명</span>
+                </div>
+                <div class="h-6 w-px bg-slate-200"></div>
+                <div class="text-center">
+                    <span class="block text-xs text-slate-500 font-medium">배정 수업</span>
+                    <span id="countClasses" class="text-lg font-bold text-emerald-600">0건</span>
+                </div>
+                <div class="h-6 w-px bg-slate-200"></div>
+                <div class="text-center">
+                    <span class="block text-xs text-slate-500 font-medium">참관 신청 교원</span>
+                    <span id="countRequests" class="text-lg font-bold text-amber-600">0명</span>
+                </div>
+            </div>
+
+            <!-- 버튼 순서 변경: 교직원 명단 관리, 참관 일자 변경 신청, 엑셀 내보내기, 일정 데이터 초기화 -->
+            <div class="flex items-center gap-2">
+                <button id="btnTeacherManage" onclick="openTeacherManageModal()" class="hidden px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-users-gear text-indigo-500"></i> 교직원 명단 관리
+                </button>
+                <button onclick="openChangeRequestModal()" class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-calendar-pen text-amber-600"></i> 참관 일자 변경 신청
+                </button>
+                <button onclick="openExcelExportModal()" class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-file-excel text-emerald-500"></i> 엑셀 내보내기
+                </button>
+                <button id="btnResetData" onclick="openResetModal()" class="hidden px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-trash-can text-rose-500"></i> 일정 데이터 초기화
+                </button>
+            </div>
+        </div>
+
+        <!-- Banner -->
+        <div id="noticeBanner" class="bg-indigo-50/70 border-l-4 border-indigo-600 p-3.5 rounded-r-xl flex justify-between items-center text-xs">
+            <div class="flex items-center gap-2 text-indigo-900">
+                <i class="fa-solid fa-circle-info text-indigo-600 text-sm"></i>
+                <span id="noticeText">[교사 모드] 배정된 수업을 확인하고 날짜를 클릭하여 참관 신청을 진행하거나 변경 신청란을 통해 변경을 신청할 수 있습니다.</span>
+            </div>
+            <span id="noticeBadge" class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full border border-amber-200/80 font-medium">권한 : 교사</span>
+        </div>
+
+        <!-- Calendar Section -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-regular fa-calendar-check text-indigo-600"></i>
+                    <span id="calendarHeaderTitle">수업 참관 일정표</span>
+                </h3>
+                <div class="flex items-center gap-3 text-xs font-medium text-slate-500">
+                    <!-- 명칭 변경: 수업 진행 -> 수업 나눔 -->
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block"></span>수업 나눔</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>참관 신청됨</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-7 gap-px bg-slate-200 rounded-t-xl overflow-hidden text-center text-xs font-semibold text-slate-600">
+                <div class="bg-slate-50 py-2 text-rose-500">일</div>
+                <div class="bg-slate-50 py-2">월</div>
+                <div class="bg-slate-50 py-2">화</div>
+                <div class="bg-slate-50 py-2">수</div>
+                <div class="bg-slate-50 py-2">목</div>
+                <div class="bg-slate-50 py-2">금</div>
+                <div class="bg-slate-50 py-2 text-indigo-600">토</div>
+            </div>
+
+            <div id="calendarDays" class="grid grid-cols-7 gap-px bg-slate-200 rounded-b-xl overflow-hidden text-xs"></div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+            <div class="mb-4">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-indigo-600"></i>
+                    월별 상세 참관 현황 목록
+                </h3>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="border-b border-slate-200 text-slate-500 bg-slate-50/50">
+                            <th class="py-3 px-4 font-medium">날짜</th>
+                            <th class="py-3 px-4 font-medium">과목 / 교시 / 학급 (장소)</th>
+                            <th class="py-3 px-4 font-medium">수업 진행 교사</th>
+                            <th class="py-3 px-4 font-medium">참관 신청 명단 (신청/변경 일시)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduleTableBody">
+                        <tr>
+                            <td colspan="4" class="py-8 text-center text-slate-400">등록된 수업 일정이 없습니다.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: 관리자 수업 등록/수정 -->
+    <div id="adminClassModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center z-50">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 id="adminModalTitle" class="font-bold text-slate-800 text-base">수업 일정 등록</h3>
+                <button onclick="closeModal('adminClassModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="space-y-3">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">과목</label>
+                        <input type="text" id="inputSubject" placeholder="예: 국어, 수학" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">수업 교사명</label>
+                        <input type="text" id="inputTeacher" list="teacherDatalist" placeholder="선택 또는 직접 입력" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                        <datalist id="teacherDatalist"></datalist>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">학급</label>
+                        <input type="text" id="inputGradeClass" placeholder="예: 3-1" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">교시</label>
+                        <input type="text" id="inputPeriod" placeholder="예: 1" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">장소 <span class="text-slate-400 font-normal">(선택 입력)</span></label>
+                    <input type="text" id="inputLocation" placeholder="예: 과학실, 음악실 (미입력 시 일반 교실)" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="pt-3 border-t">
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5 flex justify-between items-center">
+                        <span><i class="fa-solid fa-user-pen text-indigo-500 mr-1"></i> 참관 신청자 관리</span>
+                    </label>
+                    <div class="flex gap-1.5 mb-2">
+                        <input type="text" id="inputAdminAddObserver" list="teacherDatalist" placeholder="추가할 참관 교사명 선택/입력" class="flex-1 text-xs p-2 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                        <button onclick="addObserverAdmin()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium transition flex items-center gap-1">
+                            <i class="fa-solid fa-plus text-[10px]"></i> 추가
+                        </button>
+                    </div>
+                    <div id="adminObserverContainer" class="bg-slate-50 p-3 rounded-xl border space-y-2 text-xs max-h-48 overflow-y-auto">
+                        <p class="text-slate-400">참관 신청 내역이 없습니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between pt-2">
+                <button onclick="deleteSchedule()" id="btnDeleteSchedule" class="px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs rounded-lg font-medium hidden">수업 삭제</button>
+                <div class="flex gap-2 ml-auto">
+                    <button onclick="closeModal('adminClassModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-lg font-medium">취소</button>
+                    <button onclick="saveSchedule()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-lg font-medium">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 교사 참관 신청 -->
+    <div id="teacherApplyModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center z-50">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-slate-800 text-base">수업 참관 신청</h3>
+                <button onclick="closeModal('teacherApplyModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div id="applyClassInfo" class="bg-indigo-50 p-3 rounded-xl text-xs space-y-1 text-indigo-950 font-medium"></div>
+
+            <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">참관 교사 이름</label>
+                <input type="text" id="inputObserverName" list="teacherDatalist" placeholder="신청자 성함을 선택하거나 입력하세요" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeModal('teacherApplyModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-lg font-medium">취소</button>
+                <button onclick="submitObservation()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-lg font-medium">참관 신청</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 참관 일자 변경 신청 -->
+    <div id="changeRequestModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center z-50">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-amber-600"></i>
+                    참관 일자 변경 신청
+                </h3>
+                <button onclick="closeModal('changeRequestModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">신청 교사명 <span class="text-rose-500">*</span></label>
+                    <input type="text" id="changeTeacherName" list="teacherDatalist" placeholder="교사명을 선택하거나 입력하세요" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">기존 참관 일자 <span class="text-rose-500">*</span></label>
+                        <input type="date" id="changeOldDate" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">변경 참관 일자 <span class="text-rose-500">*</span></label>
+                        <input type="date" id="changeNewDate" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">변경 사유 <span class="text-slate-400 font-normal">(선택)</span></label>
+                    <input type="text" id="changeReason" placeholder="예: 조퇴, 출장, 휴가 등" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeModal('changeRequestModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-lg font-medium">취소</button>
+                <button onclick="submitChangeRequest()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg font-medium">변경 신청 등록</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 교직원 명단 관리 -->
+    <div id="teacherManageModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center z-50">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-slate-800 text-base">교직원 명단 관리</h3>
+                <button onclick="closeModal('teacherManageModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="flex gap-2">
+                <input type="text" id="newTeacherName" placeholder="이름 입력" class="flex-1 text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                <button onclick="addTeacherName()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-lg font-medium">추가</button>
+            </div>
+
+            <div class="border rounded-xl p-3 max-h-60 overflow-y-auto space-y-1.5" id="teacherBadgeContainer"></div>
+
+            <div class="flex justify-end pt-2">
+                <button onclick="closeModal('teacherManageModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-lg font-medium">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 일정 데이터 초기화 -->
+    <div id="resetModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center z-50">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-rose-600 text-base flex items-center gap-1.5">
+                    <i class="fa-solid fa-triangle-exclamation"></i> 일정 데이터 초기화
+                </h3>
+                <button onclick="closeModal('resetModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <p class="text-xs text-slate-600 leading-relaxed">
+                지정한 범위 동안 등록된 모든 <b>수업 일정 데이터(과목, 교사, 학급, 장소, 참관자 내역)</b>를 영구히 삭제합니다.<br>
+                <span class="text-rose-500 font-bold">* 교직원 명단 및 양식 파일은 삭제되지 않습니다.</span>
+            </p>
+
+            <div class="space-y-3 border-t pt-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">대상 연도</label>
+                    <input type="number" id="resetYear" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500" value="2026">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">시작월</label>
+                        <select id="resetStartMonth" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                            <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+                            <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+                            <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+                            <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">종료월</label>
+                        <select id="resetEndMonth" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                            <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+                            <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+                            <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+                            <option value="10">10월</option><option value="11">11월</option><option value="12" selected>12월</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeModal('resetModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-lg font-medium">취소</button>
+                <button onclick="executeScheduleReset()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs rounded-lg font-medium">초기화 실행</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 엑셀 내보내기 범위 선택 -->
+    <div id="excelExportModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center z-50">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-slate-800 text-base">엑셀 내보내기 범위 선택</h3>
+                <button onclick="closeModal('excelExportModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <p class="text-xs text-slate-500">지정한 기간 동안의 참관 일정이 각 월별로 1개 시트(페이지)로 구성되어 출력 및 문서 변환 시 월당 한 페이지에 깔끔하게 맞춰집니다.</p>
+
+            <div class="grid grid-cols-2 gap-3 items-center">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">시작월</label>
+                    <select id="exportStartMonth" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                        <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+                        <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+                        <option value="7">7월</option><option value="8" selected>8월</option><option value="9">9월</option>
+                        <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">종료월</label>
+                    <select id="exportEndMonth" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                        <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+                        <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+                        <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+                        <option value="10">10월</option><option value="11">11월</option><option value="12" selected>12월</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeModal('excelExportModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-lg font-medium">취소</button>
+                <button onclick="generateExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-lg font-medium">다운로드</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. Firebase 연결 설정
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZinNtLQtlx5u9nij-imisnuQVvLcf5-I",
+            authDomain: "lesson-observation-hs.firebaseapp.com",
+            databaseURL: "https://lesson-observation-hs-default-rtdb.firebaseio.com",
+            projectId: "lesson-observation-hs",
+            storageBucket: "lesson-observation-hs.firebasestorage.app",
+            messagingSenderId: "809194032590",
+            appId: "1:809194032590:web:d5577f5a4f2727f4b12f9f"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ==========================================
+        // 2. 기본 상태 변수
+        // ==========================================
+        let currentRole = 'teacher'; 
+        let currentDate = new Date();
+        
+        let defaultTeachers = [
+            "박정기", "서승안", "강래명", "박철규", "조정혜", "김병준", "김기완", "홍현선", "박수선", "김성호",
+            "김양현", "정혜섭", "이태영", "권희진", "정주영", "박보라", "이경민", "김승권", "노정은", "박은혜",
+            "임태관", "신지현", "박신영", "윤해님", "정광진", "방형협", "김유미", "최종문", "송제택", "장금주",
+            "이미정", "이우선", "김대현", "윤혜경", "신현준", "이영민", "유석만", "이승영", "김성현", "임준",
+            "백승혁", "이지호", "김수연", "정은영", "황현지", "박지원", "안정애", "지정민", "김가영", "배현주",
+            "임은실", "정혜진", "김보경", "김소연", "정다운", "이은재", "오송이", "이재현", "정소은"
+        ];
+        let teachers = [];
+        let schedules = {}; 
+        let documentForms = {};
+        let selectedDateKey = '';
+        let tempObservers = [];
+
+        // ==========================================
+        // 3. Firebase 실시간 데이터 동기화
+        // ==========================================
+        db.ref('teachers').once('value', (snapshot) => {
+            if (!snapshot.exists()) {
+                db.ref('teachers').set(defaultTeachers);
+            }
+        });
+
+        db.ref('teachers').on('value', (snapshot) => {
+            teachers = snapshot.val() || [];
+            updateTeacherDatalist();
+            renderTeacherBadges();
+            updateCounts();
+        });
+
+        db.ref('schedules').on('value', (snapshot) => {
+            schedules = snapshot.val() || {};
+            renderCalendar();
+        });
+
+        db.ref('documentForms').on('value', (snapshot) => {
+            documentForms = snapshot.val() || {};
+            renderDocumentForms();
+        });
+
+        // ==========================================
+        // 4. 서류 양식 관리 관련 기능
+        // ==========================================
+        function uploadDocumentForm() {
+            const fileInput = document.getElementById('formFileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('업로드할 서류 파일(HWP, PDF 등)을 선택해 주세요.');
+                return;
+            }
+
+            if (file.size > 8 * 1024 * 1024) {
+                alert('파일 크기가 너무 큽니다. 8MB 이하의 파일만 업로드 가능합니다.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result;
+                const newFormRef = db.ref('documentForms').push();
+                
+                newFormRef.set({
+                    name: file.name,
+                    data: base64Data,
+                    uploadedAt: getFormattedTimestamp()
+                }, (error) => {
+                    if (error) {
+                        alert('양식 업로드에 실패했습니다.');
+                    } else {
+                        alert(`'${file.name}' 서류 양식이 등록되었습니다.`);
+                        fileInput.value = '';
+                    }
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function deleteDocumentForm(key, fileName) {
+            if (confirm(`'${fileName}' 양식을 삭제하시겠습니까?`)) {
+                db.ref(`documentForms/${key}`).remove((error) => {
+                    if (error) alert('삭제 실패');
+                });
+            }
+        }
+
+        function renderDocumentForms() {
+            const container = document.getElementById('documentFormContainer');
+            const keys = Object.keys(documentForms);
+
+            if (keys.length === 0) {
+                container.innerHTML = `<span class="text-slate-400">등록된 참관 양식이 없습니다.</span>`;
+                return;
+            }
+
+            container.innerHTML = keys.map(key => {
+                const form = documentForms[key];
+                const isAdmin = currentRole === 'admin';
+
+                return `
+                    <div class="flex items-center gap-2 bg-indigo-50/80 border border-indigo-200/80 px-3 py-1.5 rounded-xl font-medium text-indigo-900">
+                        <i class="fa-solid fa-file-arrow-down text-indigo-600"></i>
+                        <a href="${form.data}" download="${form.name}" class="hover:underline hover:text-indigo-700">${form.name}</a>
+                        ${isAdmin ? `<button onclick="deleteDocumentForm('${key}', '${form.name}')" class="text-rose-500 hover:text-rose-700 ml-1.5"><i class="fa-solid fa-circle-xmark"></i></button>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // 5. 초기화 관련 기능
+        // ==========================================
+        function openResetModal() {
+            document.getElementById('resetYear').value = currentDate.getFullYear();
+            document.getElementById('resetModal').classList.remove('hidden');
+        }
+
+        function executeScheduleReset() {
+            const year = document.getElementById('resetYear').value.trim();
+            const startM = parseInt(document.getElementById('resetStartMonth').value);
+            const endM = parseInt(document.getElementById('resetEndMonth').value);
+
+            if (!year || isNaN(year)) {
+                alert('올바른 연도를 입력해주세요.');
+                return;
+            }
+
+            if (startM > endM) {
+                alert('시작월은 종료월보다 이전이거나 같아야 합니다.');
+                return;
+            }
+
+            const confirmText = `${year}년 ${startM}월부터 ${endM}월까지의 모든 수업 참관 일정을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`;
+            if (confirm(confirmText)) {
+                let updates = {};
+                let count = 0;
+
+                Object.keys(schedules).forEach(dateKey => {
+                    const [y, m] = dateKey.split('-').map(Number);
+                    if (y === parseInt(year) && m >= startM && m <= endM) {
+                        updates[`schedules/${dateKey}`] = null;
+                        count++;
+                    }
+                });
+
+                if (count === 0) {
+                    alert('지정한 기간 내 삭제할 수업 데이터가 없습니다.');
+                    closeModal('resetModal');
+                    return;
+                }
+
+                db.ref().update(updates, (error) => {
+                    if (error) {
+                        alert('데이터 초기화 중 오류가 발생했습니다.');
+                    } else {
+                        alert(`총 ${count}건의 일정 데이터가 성공적으로 초기화되었습니다.`);
+                        closeModal('resetModal');
+                    }
+                });
+            }
+        }
+
+        // ==========================================
+        // 6. 공통 및 시스템 기능
+        // ==========================================
+        function getFormattedTimestamp() {
+            const now = new Date();
+            const yy = String(now.getFullYear()).slice(-2);
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            return `${yy}.${mm}.${dd} ${hh}:${min}`;
+        }
+
+        function requestAdminMode() {
+            if (currentRole === 'admin') return;
+            const password = prompt("관리자 비밀번호를 입력하세요:");
+            if (password === '1954') {
+                setRole('admin');
+            } else if (password !== null) {
+                alert("비밀번호가 올바르지 않습니다.");
+            }
+        }
+
+        function setRole(role) {
+            currentRole = role;
+            const btnAdmin = document.getElementById('btnAdminMode');
+            const btnTeacher = document.getElementById('btnTeacherMode');
+            const roleBadge = document.getElementById('currentRoleBadge');
+            const roleText = document.getElementById('roleText');
+            const noticeText = document.getElementById('noticeText');
+            const noticeBadge = document.getElementById('noticeBadge');
+            const adminUploadArea = document.getElementById('adminFormUploadArea');
+            const btnResetData = document.getElementById('btnResetData');
+            const btnTeacherManage = document.getElementById('btnTeacherManage');
+
+            if (role === 'admin') {
+                btnAdmin.className = "px-3 py-1.5 rounded-md transition font-medium text-white bg-indigo-600 shadow-sm";
+                btnTeacher.className = "px-3 py-1.5 rounded-md transition font-medium text-indigo-300 hover:text-white";
+                roleBadge.className = "bg-emerald-600 px-2 py-0.5 rounded text-white font-medium flex items-center gap-1";
+                roleText.innerText = "관리자";
+                noticeText.innerText = "[관리자 모드] 날짜를 클릭하여 수업을 등록 및 수정하고, 참관 양식 및 교원 명단을 관리할 수 있습니다.";
+                noticeBadge.className = "bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full border border-indigo-200/80 font-medium";
+                noticeBadge.innerText = "권한 : 관리자";
+                adminUploadArea.classList.remove('hidden');
+                btnResetData.classList.remove('hidden');
+                btnTeacherManage.classList.remove('hidden');
+            } else {
+                btnTeacher.className = "px-3 py-1.5 rounded-md transition font-medium text-white bg-indigo-600 shadow-sm";
+                btnAdmin.className = "px-3 py-1.5 rounded-md transition font-medium text-indigo-300 hover:text-white";
+                roleBadge.className = "bg-amber-600 px-2 py-0.5 rounded text-white font-medium flex items-center gap-1";
+                roleText.innerText = "교사";
+                noticeText.innerText = "[교사 모드] 배정된 수업을 확인하고 날짜를 클릭하여 참관 신청을 진행하거나 변경 신청란을 통해 변경을 신청할 수 있습니다.";
+                noticeBadge.className = "bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full border border-amber-200/80 font-medium";
+                noticeBadge.innerText = "권한 : 교사";
+                adminUploadArea.classList.add('hidden');
+                btnResetData.classList.add('hidden');
+                btnTeacherManage.classList.add('hidden');
+            }
+            renderCalendar();
+            renderDocumentForms();
+        }
+
+        function updateTeacherDatalist() {
+            const datalist = document.getElementById('teacherDatalist');
+            datalist.innerHTML = teachers.map(t => `<option value="${t}">${t}</option>`).join('');
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const realToday = new Date();
+            
+            document.getElementById('calendarTitle').innerText = `${year}년 ${String(month + 1).padStart(2, '0')}월`;
+            document.getElementById('calendarHeaderTitle').innerText = `${year}년 ${month + 1}월 수업 참관 일정표`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+            const calendarDays = document.getElementById('calendarDays');
+            calendarDays.innerHTML = '';
+
+            for (let i = 0; i < firstDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = "bg-slate-50/50 min-h-[95px] p-2 border-b border-r border-slate-100";
+                calendarDays.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= lastDate; day++) {
+                const dayCell = document.createElement('div');
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const schedule = schedules[dateKey];
+
+                const isToday = (year === realToday.getFullYear() && month === realToday.getMonth() && day === realToday.getDate());
+
+                let baseStyle = "min-h-[95px] p-2 border-b border-r border-slate-100 flex flex-col justify-between cursor-pointer transition";
+                if (isToday) {
+                    dayCell.className = `${baseStyle} bg-indigo-50/90 ring-2 ring-indigo-500 ring-inset`;
+                } else {
+                    dayCell.className = `${baseStyle} bg-white hover:bg-indigo-50/30`;
+                }
+
+                dayCell.onclick = () => handleDateClick(dateKey);
+
+                let dateNumColor = (firstDay + day - 1) % 7 === 0 ? 'text-rose-500' : (firstDay + day - 1) % 7 === 6 ? 'text-indigo-600' : 'text-slate-700';
+                
+                let contentHtml = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold ${dateNumColor}">${day}</span>
+                        ${isToday ? '<span class="bg-indigo-600 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold shadow-sm">오늘</span>' : ''}
+                    </div>
+                `;
+                
+                if (schedule) {
+                    const activeObservers = (schedule.observers || []).filter(o => !o.canceled);
+                    const hasObservers = activeObservers.length > 0;
+                    
+                    let obsListText = "";
+                    if (schedule.observers && schedule.observers.length > 0) {
+                        obsListText = schedule.observers.map(o => {
+                            const name = typeof o === 'string' ? o : o.name;
+                            if (o.canceled) {
+                                return `<span class="line-through text-slate-400 font-normal">${name}</span>`;
+                            }
+                            if (o.isMoved) {
+                                return `<span>${name}</span><span class="text-[9px] text-amber-700 font-normal ml-0.5">(${o.time || '변경'})</span>`;
+                            }
+                            return name;
+                        }).join(', ');
+                    }
+
+                    const locationText = schedule.location ? ` [${schedule.location}]` : '';
+                    contentHtml += `
+                        <div class="mt-1 p-1.5 ${hasObservers ? 'bg-amber-100/90 border-amber-300 text-amber-950' : 'bg-indigo-100/80 border-indigo-200 text-indigo-950'} border rounded leading-tight shadow-sm">
+                            <div class="font-bold text-xs truncate">[${schedule.subject}] ${schedule.teacher}</div>
+                            <div class="text-[11px] font-bold text-slate-800 mt-0.5">${schedule.gradeClass} (${schedule.period})${locationText}</div>
+                            ${obsListText ? `<div class="text-[11px] text-amber-800 font-bold mt-1 truncate">참관: ${obsListText}</div>` : ''}
+                        </div>
+                    `;
+                }
+
+                dayCell.innerHTML = contentHtml;
+                calendarDays.appendChild(dayCell);
+            }
+            updateCounts();
+            renderTable();
+            updateTeacherDatalist();
+        }
+
+        function changeMonth(delta) {
+            currentDate.setMonth(currentDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function goToday() {
+            currentDate = new Date();
+            renderCalendar();
+        }
+
+        function handleDateClick(dateKey) {
+            selectedDateKey = dateKey;
+            
+            if (currentRole === 'admin') {
+                const schedule = schedules[dateKey];
+                document.getElementById('adminModalTitle').innerText = `${dateKey} 수업 등록 및 관리`;
+                document.getElementById('inputSubject').value = schedule ? schedule.subject : '';
+                document.getElementById('inputTeacher').value = schedule ? schedule.teacher : '';
+                document.getElementById('inputGradeClass').value = schedule ? schedule.gradeClass : '';
+                document.getElementById('inputLocation').value = schedule ? (schedule.location || '') : '';
+                document.getElementById('inputAdminAddObserver').value = '';
+                
+                if (schedule) {
+                    document.getElementById('inputPeriod').value = schedule.period.replace('교시', '');
+                    tempObservers = JSON.parse(JSON.stringify(schedule.observers || []));
+                } else {
+                    document.getElementById('inputPeriod').value = '';
+                    tempObservers = [];
+                }
+
+                renderAdminObserverList();
+
+                const btnDelete = document.getElementById('btnDeleteSchedule');
+                if (schedule) btnDelete.classList.remove('hidden');
+                else btnDelete.classList.add('hidden');
+
+                document.getElementById('adminClassModal').classList.remove('hidden');
+            } else {
+                const schedule = schedules[dateKey];
+                if (!schedule) {
+                    alert('등록된 수업이 없는 날짜입니다.');
+                    return;
+                }
+                const loc = schedule.location ? ` (${schedule.location})` : '';
+                document.getElementById('applyClassInfo').innerHTML = `
+                    <div>일시: ${dateKey} (${schedule.period})</div>
+                    <div>수업: ${schedule.subject} - ${schedule.teacher} 선생님 (${schedule.gradeClass}${loc})</div>
+                `;
+                document.getElementById('inputObserverName').value = '';
+                document.getElementById('teacherApplyModal').classList.remove('hidden');
+            }
+        }
+
+        function renderAdminObserverList() {
+            const container = document.getElementById('adminObserverContainer');
+            if (!tempObservers || tempObservers.length === 0) {
+                container.innerHTML = `<p class="text-slate-400">참관 신청 내역이 없습니다.</p>`;
+                return;
+            }
+
+            container.innerHTML = tempObservers.map((obs, idx) => {
+                const name = typeof obs === 'string' ? obs : obs.name;
+                const isCanceled = obs.canceled;
+                const reasonText = obs.reason ? `<span class="text-rose-600 block text-[10px] mt-0.5">ㄴ 사유: ${obs.reason}</span>` : '';
+
+                return `
+                    <div class="bg-white p-2.5 rounded-lg border flex flex-col gap-1">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="font-bold ${isCanceled ? 'line-through text-slate-400' : 'text-slate-800'}">${name} 선생님</span>
+                                ${obs.time ? `<span class="text-[10px] ${isCanceled ? 'line-through text-slate-300' : 'text-slate-400'} ml-1">(${obs.time})</span>` : ''}
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="toggleCancelObserverAdmin(${idx})" class="px-2 py-0.5 ${isCanceled ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'} rounded text-[11px] font-medium">${isCanceled ? '취소 해제' : '취소선 처리'}</button>
+                                <button onclick="setObserverReasonAdmin(${idx})" class="px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded text-[11px] font-medium">사유 입력</button>
+                                <button onclick="deleteObserverAdmin(${idx})" class="px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded text-[11px] font-medium">삭제</button>
+                            </div>
+                        </div>
+                        ${reasonText}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleCancelObserverAdmin(index) {
+            const obs = tempObservers[index];
+            if (typeof obs === 'string') {
+                tempObservers[index] = { name: obs, time: getFormattedTimestamp(), canceled: true, reason: '' };
+            } else {
+                obs.canceled = !obs.canceled;
+            }
+            renderAdminObserverList();
+        }
+
+        function addObserverAdmin() {
+            const nameInput = document.getElementById('inputAdminAddObserver');
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert('추가할 참관 교사 이름을 입력해주세요.');
+                return;
+            }
+
+            const timestamp = getFormattedTimestamp();
+            tempObservers.push({
+                name: name,
+                time: timestamp,
+                reason: '',
+                canceled: false
+            });
+
+            nameInput.value = '';
+            renderAdminObserverList();
+        }
+
+        function setObserverReasonAdmin(index) {
+            const obs = tempObservers[index];
+            const currentReason = typeof obs === 'string' ? '' : (obs.reason || '');
+
+            const reason = prompt("참관 변경/취소 사유를 입력하세요 (선택 사항, 빈칸 가능):", currentReason);
+            if (reason === null) return; 
+
+            if (typeof obs === 'string') {
+                tempObservers[index] = { 
+                    name: obs, 
+                    time: getFormattedTimestamp(), 
+                    reason: reason.trim(), 
+                    canceled: false 
+                };
+            } else {
+                obs.reason = reason.trim();
+            }
+
+            renderAdminObserverList();
+        }
+
+        function deleteObserverAdmin(index) {
+            if (confirm("해당 참관 신청을 삭제하시겠습니까? (저장 버튼을 눌러야 최종 반영됩니다)")) {
+                tempObservers.splice(index, 1);
+                renderAdminObserverList();
+            }
+        }
+
+        function saveSchedule() {
+            const subject = document.getElementById('inputSubject').value.trim();
+            const teacher = document.getElementById('inputTeacher').value.trim();
+            const gradeClass = document.getElementById('inputGradeClass').value.trim();
+            let rawPeriod = document.getElementById('inputPeriod').value.trim();
+            const location = document.getElementById('inputLocation').value.trim();
+
+            if (!subject || !teacher || !gradeClass || !rawPeriod) {
+                alert('과목, 수업 교사명, 학급, 교시 항목을 모두 입력해주세요.');
+                return;
+            }
+
+            let period = rawPeriod;
+            if (!isNaN(rawPeriod) && rawPeriod !== '') {
+                period = `${rawPeriod}교시`;
+            } else if (!rawPeriod.includes('교시')) {
+                period = `${rawPeriod}교시`;
+            }
+
+            const scheduleData = { 
+                subject, 
+                teacher, 
+                gradeClass, 
+                period, 
+                location, 
+                observers: JSON.parse(JSON.stringify(tempObservers)) 
+            };
+
+            db.ref('schedules/' + selectedDateKey).set(scheduleData, (error) => {
+                if (error) {
+                    alert('저장에 실패했습니다.');
+                } else {
+                    closeModal('adminClassModal');
+                }
+            });
+        }
+
+        function deleteSchedule() {
+            if (confirm('해당 일자의 수업을 삭제하시겠습니까?')) {
+                db.ref('schedules/' + selectedDateKey).remove((error) => {
+                    if (error) {
+                        alert('삭제에 실패했습니다.');
+                    } else {
+                        closeModal('adminClassModal');
+                    }
+                });
+            }
+        }
+
+        function submitObservation() {
+            const observerName = document.getElementById('inputObserverName').value.trim();
+            if (!observerName) {
+                alert('참관하시는 선생님 성함을 입력해주세요.');
+                return;
+            }
+
+            let currentObservers = schedules[selectedDateKey].observers || [];
+            const timestamp = getFormattedTimestamp();
+            currentObservers.push({ name: observerName, time: timestamp, reason: '', canceled: false });
+
+            db.ref(`schedules/${selectedDateKey}/observers`).set(currentObservers, (error) => {
+                if (error) {
+                    alert('신청 실패');
+                } else {
+                    alert(`${observerName} 선생님, 참관 신청이 완료되었습니다.\n(신청일시: ${timestamp})`);
+                    closeModal('teacherApplyModal');
+                }
+            });
+        }
+
+        // ==========================================
+        // 7. 참관 일자 변경 신청
+        // ==========================================
+        function openChangeRequestModal() {
+            document.getElementById('changeTeacherName').value = '';
+            document.getElementById('changeOldDate').value = '';
+            document.getElementById('changeNewDate').value = '';
+            document.getElementById('changeReason').value = '';
+            document.getElementById('changeRequestModal').classList.remove('hidden');
+        }
+
+        function submitChangeRequest() {
+            const teacherName = document.getElementById('changeTeacherName').value.trim();
+            const oldDate = document.getElementById('changeOldDate').value;
+            const newDate = document.getElementById('changeNewDate').value;
+            const reason = document.getElementById('changeReason').value.trim();
+
+            if (!teacherName) {
+                alert('신청 교사명을 입력하거나 선택해주세요.');
+                return;
+            }
+            if (!oldDate || !newDate) {
+                alert('기존 참관 일자와 변경 참관 일자를 달력에서 모두 선택해주세요.');
+                return;
+            }
+            if (oldDate === newDate) {
+                alert('기존 일자와 변경 일자가 동일합니다.');
+                return;
+            }
+
+            // 참관 여부 검증 기능
+            const oldSchedule = schedules[oldDate];
+            const oldObservers = oldSchedule ? (oldSchedule.observers || []) : [];
+            const isRegisteredInOldDate = oldObservers.some(o => {
+                const name = typeof o === 'string' ? o : o.name;
+                return name === teacherName && !o.canceled;
+            });
+
+            if (!isRegisteredInOldDate) {
+                // 설명 변경: 자신이 참관하기로 -> 참관하기로
+                alert(`⚠️ 선택하신 기존 날짜(${oldDate})에 ${teacherName} 선생님의 참관 신청 내역이 확인되지 않습니다.\n\n참관하기로 신청했던 날짜를 다시 한번 확인해 주세요.`);
+                return;
+            }
+
+            // 변경하려는 일자에 배정된 수업이 있는지 체크
+            let newSchedule = schedules[newDate];
+            if (!newSchedule) {
+                alert('선택하신 변경 일자에 배정된 수업이 없습니다. 관리자가 먼저 해당 일자에 수업을 등록해 두었는지 확인해주세요.');
+                return;
+            }
+
+            const timestamp = getFormattedTimestamp();
+            let updates = {};
+
+            // 1) 기존 참관 내역 취소선 처리
+            let updatedOldObservers = [...oldObservers];
+            let existingIdx = updatedOldObservers.findIndex(o => (typeof o === 'string' ? o : o.name) === teacherName && !o.canceled);
+            
+            if (existingIdx !== -1) {
+                if (typeof updatedOldObservers[existingIdx] === 'string') {
+                    updatedOldObservers[existingIdx] = {
+                        name: teacherName,
+                        time: timestamp,
+                        reason: reason,
+                        canceled: true,
+                        movedTo: newDate
+                    };
+                } else {
+                    updatedOldObservers[existingIdx].canceled = true;
+                    updatedOldObservers[existingIdx].time = timestamp;
+                    updatedOldObservers[existingIdx].reason = reason;
+                    updatedOldObservers[existingIdx].movedTo = newDate;
+                }
+                updates[`schedules/${oldDate}/observers`] = updatedOldObservers;
+            }
+
+            // 2) 변경 일자 내역 추가
+            let newObservers = newSchedule.observers || [];
+            newObservers.push({
+                name: teacherName,
+                time: timestamp,
+                reason: reason,
+                canceled: false,
+                isMoved: true,
+                movedFrom: oldDate
+            });
+            updates[`schedules/${newDate}/observers`] = newObservers;
+
+            // 3) Firebase 일괄 업데이트
+            db.ref().update(updates, (error) => {
+                if (error) {
+                    alert('변경 신청 처리 중 오류가 발생했습니다.');
+                } else {
+                    alert(`${teacherName} 선생님, 참관 일자 변경 신청이 접수되었습니다.\n(기존: ${oldDate} → 변경: ${newDate})`);
+                    closeModal('changeRequestModal');
+                }
+            });
+        }
+
+        // ==========================================
+        // 8. 교직원 명단 관리
+        // ==========================================
+        function openTeacherManageModal() {
+            if (currentRole !== 'admin') {
+                alert('교직원 명단 관리는 관리자 권한으로만 가능합니다.');
+                return;
+            }
+            renderTeacherBadges();
+            document.getElementById('teacherManageModal').classList.remove('hidden');
+        }
+
+        function renderTeacherBadges() {
+            const container = document.getElementById('teacherBadgeContainer');
+            document.getElementById('countTeachers').innerText = `${teachers.length}명`;
+            
+            if (teachers.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 text-xs text-center py-2">등록된 교직원이 없습니다.</p>';
+                return;
+            }
+
+            container.innerHTML = teachers.map((name, index) => `
+                <div class="flex justify-between items-center bg-slate-100 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700">
+                    <span class="font-semibold">${name}</span>
+                    <div class="flex items-center gap-1">
+                        <button onclick="moveTeacher(${index}, -1)" ${index === 0 ? 'disabled class="text-slate-300 px-1"' : 'class="text-slate-600 hover:text-indigo-600 px-1"'}>
+                            <i class="fa-solid fa-chevron-up text-xs"></i>
+                        </button>
+                        <button onclick="moveTeacher(${index}, 1)" ${index === teachers.length - 1 ? 'disabled class="text-slate-300 px-1"' : 'class="text-slate-600 hover:text-indigo-600 px-1"'}>
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </button>
+                        <button onclick="removeTeacherName(${index})" class="text-rose-500 hover:text-rose-700 ml-2">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function moveTeacher(index, direction) {
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= teachers.length) return;
+
+            const temp = teachers[index];
+            teachers[index] = teachers[targetIndex];
+            teachers[targetIndex] = temp;
+
+            db.ref('teachers').set(teachers, (error) => {
+                if (error) {
+                    alert('순서 변경에 실패했습니다.');
+                } else {
+                    renderTeacherBadges();
+                }
+            });
+        }
+
+        function addTeacherName() {
+            const input = document.getElementById('newTeacherName');
+            const name = input.value.trim();
+            if (name) {
+                teachers.push(name);
+                db.ref('teachers').set(teachers);
+                input.value = '';
+            }
+        }
+
+        function removeTeacherName(index) {
+            const targetName = teachers[index];
+            if (confirm(`${targetName} 선생님을 교직원 명단에서 삭제하시겠습니까?`)) {
+                teachers.splice(index, 1);
+                db.ref('teachers').set(teachers);
+            }
+        }
+
+        function updateCounts() {
+            const currentYear = currentDate.getFullYear();
+            const currentMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const currentMonthPrefix = `${currentYear}-${currentMonth}`;
+
+            let classCount = 0;
+            const uniqueObservers = new Set();
+
+            Object.keys(schedules).forEach(date => {
+                if (date.startsWith(currentMonthPrefix)) {
+                    classCount++;
+                    if (schedules[date].observers) {
+                        schedules[date].observers.forEach(obs => {
+                            if (typeof obs === 'string') {
+                                uniqueObservers.add(obs);
+                            } else if (!obs.canceled) {
+                                uniqueObservers.add(obs.name);
+                            }
+                        });
+                    }
+                }
+            });
+
+            document.getElementById('countTeachers').innerText = `${teachers.length}명`;
+            document.getElementById('countClasses').innerText = `${classCount}건`;
+            document.getElementById('countRequests').innerText = `${uniqueObservers.size}명`;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('scheduleTableBody');
+            const currentYear = currentDate.getFullYear();
+            const currentMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const currentMonthPrefix = `${currentYear}-${currentMonth}`;
+
+            const monthKeys = Object.keys(schedules).filter(date => date.startsWith(currentMonthPrefix)).sort();
+
+            if (monthKeys.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-400">등록된 수업 일정이 없습니다.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = monthKeys.map(date => {
+                const s = schedules[date];
+                let obsText = '미신청';
+                if (s.observers && s.observers.length > 0) {
+                    obsText = s.observers.map(o => {
+                        if (typeof o === 'string') return o;
+                        const isCanceled = o.canceled;
+                        const strikeClass = isCanceled ? 'line-through text-slate-400' : '';
+                        const reasonText = o.reason ? `<span class="text-rose-500 text-[10px] font-normal"> (사유: ${o.reason})</span>` : '';
+                        const timeTag = o.time ? `<span class="text-[10px] text-slate-500 font-normal ${strikeClass}">(${o.time})</span>` : '';
+                        return `<span class="${strikeClass}">${o.name}</span> ${timeTag}${reasonText}`;
+                    }).join(', ');
+                }
+                const locInfo = s.location ? ` [${s.location}]` : '';
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="py-3 px-4 font-medium text-slate-700">${date}</td>
+                        <td class="py-3 px-4 text-slate-800 font-bold">${s.subject} / ${s.period} / ${s.gradeClass}${locInfo}</td>
+                        <td class="py-3 px-4 font-bold text-indigo-600">${s.teacher} 선생님</td>
+                        <td class="py-3 px-4 text-slate-700 font-semibold">${obsText}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function openExcelExportModal() {
+            document.getElementById('excelExportModal').classList.remove('hidden');
+        }
+
+        // ==========================================
+        // 9. 엑셀 내보내기
+        // ==========================================
+        function generateExcel() {
+            const startM = parseInt(document.getElementById('exportStartMonth').value);
+            const endM = parseInt(document.getElementById('exportEndMonth').value);
+
+            if (startM > endM) {
+                alert('시작월은 종료월보다 이전이거나 같아야 합니다.');
+                return;
+            }
+
+            const year = currentDate.getFullYear();
+            const wb = XLSX.utils.book_new();
+
+            for (let m = startM; m <= endM; m++) {
+                const monthStr = `${m}월`;
+                let wsData = [];
+
+                wsData.push([`${year}학년도 수업참관 일정`]);
+                wsData.push([monthStr]);
+                wsData.push(["요일", "월", "화", "수", "목", "금"]);
+
+                const lastDate = new Date(year, m, 0).getDate();
+
+                let weeks = [];
+                let currentWeek = [null, null, null, null, null];
+
+                for (let d = 1; d <= lastDate; d++) {
+                    const dateObj = new Date(year, m - 1, d);
+                    const dayOfWeek = dateObj.getDay(); 
+
+                    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                        currentWeek[dayOfWeek - 1] = d;
+                    }
+
+                    if (dayOfWeek === 5 || d === lastDate) {
+                        if (currentWeek.some(day => day !== null)) {
+                            weeks.push(currentWeek);
+                        }
+                        currentWeek = [null, null, null, null, null];
+                    }
+                }
+
+                weeks.forEach(week => {
+                    let rowDates = ["날짜"];
+                    let rowSubjects = ["과목"];
+                    let rowTeachers = ["교사명"];
+                    let rowClasses = ["학급"];
+                    let rowPeriods = ["교시"];
+                    let rowObservers = ["참관"];
+
+                    for (let col = 0; col < 5; col++) {
+                        const dayNum = week[col];
+                        if (!dayNum) {
+                            rowDates.push("");
+                            rowSubjects.push("");
+                            rowTeachers.push("");
+                            rowClasses.push("");
+                            rowPeriods.push("");
+                            rowObservers.push("");
+                            continue;
+                        }
+
+                        const dateKey = `${year}-${String(m).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+                        const schedule = schedules[dateKey];
+
+                        rowDates.push(dayNum);
+
+                        if (schedule) {
+                            rowSubjects.push(schedule.subject || "");
+                            rowTeachers.push(schedule.teacher || "");
+                            const loc = schedule.location ? `(${schedule.location})` : "";
+                            rowClasses.push(`${schedule.gradeClass || ""}${loc}`);
+                            rowPeriods.push(schedule.period ? schedule.period.replace('교시', '') : "");
+
+                            let obsStr = "";
+                            if (schedule.observers && schedule.observers.length > 0) {
+                                obsStr = schedule.observers
+                                    .filter(o => typeof o === 'string' || !o.canceled)
+                                    .map(o => typeof o === 'string' ? o : o.name)
+                                    .join(', ');
+                            }
+                            rowObservers.push(obsStr);
+                        } else {
+                            rowSubjects.push("");
+                            rowTeachers.push("");
+                            rowClasses.push("");
+                            rowPeriods.push("");
+                            rowObservers.push("");
+                        }
+                    }
+
+                    wsData.push(rowDates);
+                    wsData.push(rowSubjects);
+                    wsData.push(rowTeachers);
+                    wsData.push(rowClasses);
+                    wsData.push(rowPeriods);
+                    wsData.push(rowObservers);
+                });
+
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+                ws['!pageSetup'] = { 
+                    fitToWidth: 1, 
+                    fitToHeight: 1, 
+                    orientation: 'landscape' 
+                };
+                ws['!margins'] = { left: 0.3, right: 0.3, top: 0.3, bottom: 0.3, header: 0.1, footer: 0.1 };
+
+                XLSX.utils.book_append_sheet(wb, ws, `${m}월_수업참관일정`);
+            }
+
+            XLSX.writeFile(wb, `${year}학년도_수업참관일정_${startM}월~${endM}월.xlsx`);
+            closeModal('excelExportModal');
+        }
+    </script>
+</body>
+</html>

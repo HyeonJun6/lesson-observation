@@ -122,7 +122,7 @@
         <!-- Calendar Section -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <i class="fa-regular fa-calendar-check text-indigo-600"></i>
                     <span id="calendarHeaderTitle">수업 참관 일정표</span>
                 </h3>
@@ -133,41 +133,42 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-7 gap-px bg-slate-200 rounded-t-xl overflow-hidden text-center text-xs font-semibold text-slate-600">
-                <div class="bg-slate-50 py-2 text-rose-500">일</div>
-                <div class="bg-slate-50 py-2">월</div>
-                <div class="bg-slate-50 py-2">화</div>
-                <div class="bg-slate-50 py-2">수</div>
-                <div class="bg-slate-50 py-2">목</div>
-                <div class="bg-slate-50 py-2">금</div>
-                <div class="bg-slate-50 py-2 text-indigo-600">토</div>
+            <!-- 요일 헤더 -->
+            <div class="grid grid-cols-7 gap-px bg-slate-200 rounded-t-xl overflow-hidden text-center text-sm font-bold text-slate-700">
+                <div class="bg-slate-50 py-2.5 text-rose-500">일</div>
+                <div class="bg-slate-50 py-2.5">월</div>
+                <div class="bg-slate-50 py-2.5">화</div>
+                <div class="bg-slate-50 py-2.5">수</div>
+                <div class="bg-slate-50 py-2.5">목</div>
+                <div class="bg-slate-50 py-2.5">금</div>
+                <div class="bg-slate-50 py-2.5 text-indigo-600">토</div>
             </div>
 
-            <div id="calendarDays" class="grid grid-cols-7 gap-px bg-slate-200 rounded-b-xl overflow-hidden text-xs"></div>
+            <div id="calendarDays" class="grid grid-cols-7 gap-px bg-slate-200 rounded-b-xl overflow-hidden"></div>
         </div>
 
-        <!-- Table Section -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
-            <div class="mb-4">
-                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+        <!-- Table Section (하단 상세 현황 목록 - 글자 크기 및 여백 확대) -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
+            <div class="mb-4 border-b border-slate-100 pb-3">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <i class="fa-solid fa-list-check text-indigo-600"></i>
                     월별 상세 참관 현황 목록
                 </h3>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
+                <table class="w-full text-left text-base">
                     <thead>
-                        <tr class="border-b border-slate-200 text-slate-500 bg-slate-50/50">
-                            <th class="py-3 px-4 font-medium">날짜</th>
-                            <th class="py-3 px-4 font-medium">구분 및 정보</th>
-                            <th class="py-3 px-4 font-medium">수업 진행 교사</th>
-                            <th class="py-3 px-4 font-medium">참관 신청 명단 (신청/변경 일시)</th>
+                        <tr class="border-b-2 border-slate-200 text-slate-600 bg-slate-50/80 text-sm font-bold">
+                            <th class="py-4 px-5 w-1/6">날짜</th>
+                            <th class="py-4 px-5 w-2/5">구분 및 정보</th>
+                            <th class="py-4 px-5 w-1/5">수업 진행 교사</th>
+                            <th class="py-4 px-5 w-1/4">참관 신청 명단 (신청/변경 일시)</th>
                         </tr>
                     </thead>
                     <tbody id="scheduleTableBody">
                         <tr>
-                            <td colspan="4" class="py-8 text-center text-slate-400">등록된 수업 일정이 없습니다.</td>
+                            <td colspan="4" class="py-12 text-center text-slate-400 font-medium">등록된 수업 일정이 없습니다.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -183,7 +184,6 @@
                 <button onclick="closeModal('adminClassModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             
-            <!-- 항목 구분 (수업 등록 VS 학교 행사 등록) -->
             <div class="flex gap-4 p-2 bg-slate-50 rounded-xl border text-xs font-semibold text-slate-700">
                 <label class="flex items-center gap-1.5 cursor-pointer">
                     <input type="radio" name="entryType" value="class" checked onchange="toggleEntryType()" class="text-indigo-600 focus:ring-indigo-500">
@@ -195,7 +195,6 @@
                 </label>
             </div>
 
-            <!-- 학교 행사 전용 영역 -->
             <div id="eventFieldsArea" class="hidden space-y-3 bg-rose-50/50 p-3.5 rounded-xl border border-rose-200/70">
                 <div>
                     <label class="block text-xs font-medium text-rose-800 mb-1">학교 행사명 <span class="text-slate-400 font-normal">(선택 입력)</span></label>
@@ -204,7 +203,6 @@
                 </div>
             </div>
 
-            <!-- 수업 일정 전용 영역 -->
             <div id="classFieldsArea" class="space-y-3">
                 <div class="grid grid-cols-2 gap-2">
                     <div>
@@ -695,6 +693,9 @@
             }
         }
 
+        // ==========================================
+        // 달력 렌더링
+        // ==========================================
         function renderCalendar() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
@@ -710,7 +711,7 @@
 
             for (let i = 0; i < firstDay; i++) {
                 const emptyCell = document.createElement('div');
-                emptyCell.className = "bg-slate-50/50 min-h-[95px] p-2 border-b border-r border-slate-100";
+                emptyCell.className = "bg-slate-50/50 min-h-[115px] p-2 border-b border-r border-slate-100";
                 calendarDays.appendChild(emptyCell);
             }
 
@@ -721,7 +722,7 @@
 
                 const isToday = (year === realToday.getFullYear() && month === realToday.getMonth() && day === realToday.getDate());
 
-                let baseStyle = "min-h-[95px] p-2 border-b border-r border-slate-100 flex flex-col justify-between cursor-pointer transition";
+                let baseStyle = "min-h-[115px] p-2 border-b border-r border-slate-100 flex flex-col justify-between cursor-pointer transition";
                 if (isToday) {
                     dayCell.className = `${baseStyle} bg-indigo-50/90 ring-2 ring-indigo-500 ring-inset`;
                 } else {
@@ -733,19 +734,19 @@
                 let dateNumColor = (firstDay + day - 1) % 7 === 0 ? 'text-rose-500' : (firstDay + day - 1) % 7 === 6 ? 'text-indigo-600' : 'text-slate-700';
                 
                 let contentHtml = `
-                    <div class="flex justify-between items-center">
-                        <span class="font-bold ${dateNumColor}">${day}</span>
-                        ${isToday ? '<span class="bg-indigo-600 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold shadow-sm">오늘</span>' : ''}
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-extrabold text-sm md:text-base ${dateNumColor}">${day}</span>
+                        ${isToday ? '<span class="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">오늘</span>' : ''}
                     </div>
                 `;
                 
                 if (schedule) {
                     if (schedule.isEvent) {
                         contentHtml += `
-                            <div class="mt-1 p-1.5 bg-rose-50 border border-rose-200 text-rose-950 rounded leading-tight shadow-sm">
-                                <div class="font-bold text-xs text-rose-600 truncate"><i class="fa-solid fa-flag text-[10px] mr-1"></i>[행사]</div>
-                                <div class="text-[11px] font-bold text-slate-800 mt-0.5 break-keep">${schedule.eventName || ''}</div>
-                                <div class="text-[10px] text-rose-500 font-medium mt-0.5">참관 불가</div>
+                            <div class="mt-0.5 p-2 bg-rose-50 border border-rose-200 text-rose-950 rounded-lg leading-tight shadow-sm">
+                                <div class="font-bold text-xs text-rose-600 truncate"><i class="fa-solid fa-flag text-xs mr-1"></i>[행사]</div>
+                                <div class="text-sm font-extrabold text-slate-900 mt-0.5 break-keep">${schedule.eventName || ''}</div>
+                                <div class="text-xs text-rose-500 font-bold mt-1">참관 불가</div>
                             </div>
                         `;
                     } else {
@@ -760,19 +761,20 @@
                                     return `<span class="line-through text-slate-400 font-normal">${name}</span>`;
                                 }
                                 if (o.isMoved) {
-                                    return `<span>${name}</span><span class="text-[9px] text-amber-700 font-normal ml-0.5">(${o.time || '변경'})</span>`;
+                                    return `<span>${name}</span><span class="text-[10px] text-amber-700 font-normal ml-0.5">(${o.time || '변경'})</span>`;
                                 }
                                 return name;
                             }).join(', ');
                         }
 
                         const locationText = schedule.location ? ` [${schedule.location}]` : '';
+                        
                         contentHtml += `
-                            <div class="mt-1 p-1.5 ${hasObservers ? 'bg-amber-100/90 border-amber-300 text-amber-950' : 'bg-indigo-100/80 border-indigo-200 text-indigo-950'} border rounded leading-tight shadow-sm">
-                                <div class="font-bold text-xs break-keep">[${schedule.subject}]</div>
-                                <div class="font-bold text-xs text-indigo-700 mt-0.5 break-keep">${schedule.teacher} 선생님</div>
-                                <div class="text-[11px] font-bold text-slate-800 mt-0.5">${schedule.gradeClass} (${schedule.period})${locationText}</div>
-                                ${obsListText ? `<div class="text-[11px] text-amber-800 font-bold mt-1 break-words">참관: ${obsListText}</div>` : ''}
+                            <div class="mt-0.5 p-2 ${hasObservers ? 'bg-amber-100 border-amber-300 text-amber-950' : 'bg-indigo-100/90 border-indigo-200 text-indigo-950'} border rounded-lg leading-snug shadow-sm">
+                                <div class="font-extrabold text-sm text-slate-900 break-keep">[${schedule.subject}]</div>
+                                <div class="font-bold text-sm text-indigo-800 mt-0.5 break-keep">${schedule.teacher} 선생님</div>
+                                <div class="text-xs font-bold text-slate-800 mt-1">${schedule.gradeClass} (${schedule.period})${locationText}</div>
+                                ${obsListText ? `<div class="text-xs text-amber-900 font-bold mt-1 border-t border-amber-200/80 pt-1 break-words">참관: ${obsListText}</div>` : ''}
                             </div>
                         `;
                     }
@@ -1071,7 +1073,6 @@
                 return;
             }
 
-            // 참관 여부 검증 기능
             const oldSchedule = schedules[oldDate];
             const oldObservers = oldSchedule ? (oldSchedule.observers || []) : [];
             const isRegisteredInOldDate = oldObservers.some(o => {
@@ -1084,7 +1085,6 @@
                 return;
             }
 
-            // 변경하려는 일자에 배정된 수업이 있는지/학교 행사인지 체크
             let newSchedule = schedules[newDate];
             if (!newSchedule) {
                 alert('선택하신 변경 일자에 배정된 수업이 없습니다. 관리자가 먼저 해당 일자에 수업을 등록해 두었는지 확인해주세요.');
@@ -1100,7 +1100,6 @@
             const timestamp = getFormattedTimestamp();
             let updates = {};
 
-            // 1) 기존 참관 내역 취소선 처리
             let updatedOldObservers = [...oldObservers];
             let existingIdx = updatedOldObservers.findIndex(o => (typeof o === 'string' ? o : o.name) === teacherName && !o.canceled);
             
@@ -1122,7 +1121,6 @@
                 updates[`schedules/${oldDate}/observers`] = updatedOldObservers;
             }
 
-            // 2) 변경 일자 내역 추가
             let newObservers = newSchedule.observers || [];
             newObservers.push({
                 name: teacherName,
@@ -1134,7 +1132,6 @@
             });
             updates[`schedules/${newDate}/observers`] = newObservers;
 
-            // 3) Firebase 일괄 업데이트
             db.ref().update(updates, (error) => {
                 if (error) {
                     alert('변경 신청 처리 중 오류가 발생했습니다.');
@@ -1250,6 +1247,9 @@
             document.getElementById('countRequests').innerText = `${uniqueObservers.size}명`;
         }
 
+        // ==========================================
+        // 하단 테이블 목록 렌더링 (글자 크기 & 패딩 확대)
+        // ==========================================
         function renderTable() {
             const tbody = document.getElementById('scheduleTableBody');
             const currentYear = currentDate.getFullYear();
@@ -1259,7 +1259,7 @@
             const monthKeys = Object.keys(schedules).filter(date => date.startsWith(currentMonthPrefix)).sort();
 
             if (monthKeys.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-400">등록된 수업 일정이 없습니다.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="py-12 text-center text-slate-400 font-medium text-base">등록된 수업 일정이 없습니다.</td></tr>`;
                 return;
             }
 
@@ -1269,32 +1269,32 @@
                     const eventTitle = s.eventName ? ` ${s.eventName}` : '';
                     return `
                         <tr class="border-b border-slate-100 bg-rose-50/20 hover:bg-rose-50/50">
-                            <td class="py-3 px-4 font-medium text-slate-700">${date}</td>
-                            <td class="py-3 px-4 text-rose-600 font-bold"><i class="fa-solid fa-flag text-xs mr-1"></i>[학교 행사]${eventTitle}</td>
-                            <td class="py-3 px-4 text-slate-400 font-medium">-</td>
-                            <td class="py-3 px-4 text-rose-500 font-medium">참관 불가 (학교 행사)</td>
+                            <td class="py-4 px-5 font-semibold text-slate-600 text-base">${date}</td>
+                            <td class="py-4 px-5 text-rose-600 font-bold text-lg"><i class="fa-solid fa-flag text-base mr-1.5"></i>[학교 행사]${eventTitle}</td>
+                            <td class="py-4 px-5 text-slate-400 font-medium text-base">-</td>
+                            <td class="py-4 px-5 text-rose-500 font-semibold text-base">참관 불가 (학교 행사)</td>
                         </tr>
                     `;
                 }
 
-                let obsText = '미신청';
+                let obsText = '<span class="text-slate-500 font-normal">미신청</span>';
                 if (s.observers && s.observers.length > 0) {
                     obsText = s.observers.map(o => {
                         if (typeof o === 'string') return o;
                         const isCanceled = o.canceled;
-                        const strikeClass = isCanceled ? 'line-through text-slate-400' : '';
-                        const reasonText = o.reason ? `<span class="text-rose-500 text-[10px] font-normal"> (사유: ${o.reason})</span>` : '';
-                        const timeTag = o.time ? `<span class="text-[10px] text-slate-500 font-normal ${strikeClass}">(${o.time})</span>` : '';
+                        const strikeClass = isCanceled ? 'line-through text-slate-400' : 'text-slate-800 font-bold';
+                        const reasonText = o.reason ? `<span class="text-rose-500 text-xs font-normal"> (사유: ${o.reason})</span>` : '';
+                        const timeTag = o.time ? `<span class="text-xs text-slate-500 font-normal ${isCanceled ? 'line-through text-slate-300' : ''}">(${o.time})</span>` : '';
                         return `<span class="${strikeClass}">${o.name}</span> ${timeTag}${reasonText}`;
                     }).join(', ');
                 }
                 const locInfo = s.location ? ` [${s.location}]` : '';
                 return `
-                    <tr class="border-b border-slate-100 hover:bg-slate-50">
-                        <td class="py-3 px-4 font-medium text-slate-700">${date}</td>
-                        <td class="py-3 px-4 text-slate-800 font-bold">${s.subject} / ${s.period} / ${s.gradeClass}${locInfo}</td>
-                        <td class="py-3 px-4 font-bold text-indigo-600">${s.teacher} 선생님</td>
-                        <td class="py-3 px-4 text-slate-700 font-semibold">${obsText}</td>
+                    <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition">
+                        <td class="py-4 px-5 font-semibold text-slate-600 text-base">${date}</td>
+                        <td class="py-4 px-5 text-slate-900 font-bold text-lg">${s.subject} <span class="text-slate-500 font-medium text-base">/ ${s.period} / ${s.gradeClass}${locInfo}</span></td>
+                        <td class="py-4 px-5 font-bold text-indigo-600 text-base">${s.teacher} 선생님</td>
+                        <td class="py-4 px-5 text-slate-800 text-base leading-relaxed">${obsText}</td>
                     </tr>
                 `;
             }).join('');

@@ -744,7 +744,7 @@
                         contentHtml += `
                             <div class="mt-1 p-1.5 bg-rose-50 border border-rose-200 text-rose-950 rounded leading-tight shadow-sm">
                                 <div class="font-bold text-xs text-rose-600 truncate"><i class="fa-solid fa-flag text-[10px] mr-1"></i>[행사]</div>
-                                <div class="text-[11px] font-bold text-slate-800 mt-0.5 truncate">${schedule.eventName || ''}</div>
+                                <div class="text-[11px] font-bold text-slate-800 mt-0.5 break-keep">${schedule.eventName || ''}</div>
                                 <div class="text-[10px] text-rose-500 font-medium mt-0.5">참관 불가</div>
                             </div>
                         `;
@@ -769,9 +769,10 @@
                         const locationText = schedule.location ? ` [${schedule.location}]` : '';
                         contentHtml += `
                             <div class="mt-1 p-1.5 ${hasObservers ? 'bg-amber-100/90 border-amber-300 text-amber-950' : 'bg-indigo-100/80 border-indigo-200 text-indigo-950'} border rounded leading-tight shadow-sm">
-                                <div class="font-bold text-xs truncate">[${schedule.subject}] ${schedule.teacher}</div>
+                                <div class="font-bold text-xs break-keep">[${schedule.subject}]</div>
+                                <div class="font-bold text-xs text-indigo-700 mt-0.5 break-keep">${schedule.teacher} 선생님</div>
                                 <div class="text-[11px] font-bold text-slate-800 mt-0.5">${schedule.gradeClass} (${schedule.period})${locationText}</div>
-                                ${obsListText ? `<div class="text-[11px] text-amber-800 font-bold mt-1 truncate">참관: ${obsListText}</div>` : ''}
+                                ${obsListText ? `<div class="text-[11px] text-amber-800 font-bold mt-1 break-words">참관: ${obsListText}</div>` : ''}
                             </div>
                         `;
                     }
@@ -1386,7 +1387,7 @@
                                 rowObservers.push("참관 불가");
                             } else {
                                 rowSubjects.push(schedule.subject || "");
-                                rowTeachers.push(schedule.teacher || "");
+                                rowTeachers.push(schedule.teacher ? `${schedule.teacher} 선생님` : "");
                                 const loc = schedule.location ? `(${schedule.location})` : "";
                                 rowClasses.push(`${schedule.gradeClass || ""}${loc}`);
                                 rowPeriods.push(schedule.period ? schedule.period.replace('교시', '') : "");

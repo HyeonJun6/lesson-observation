@@ -198,7 +198,7 @@
             <!-- 학교 행사 전용 영역 -->
             <div id="eventFieldsArea" class="hidden space-y-3 bg-rose-50/50 p-3.5 rounded-xl border border-rose-200/70">
                 <div>
-                    <label class="block text-xs font-medium text-rose-800 mb-1">학교 행사명 <span class="text-rose-500">*</span></label>
+                    <label class="block text-xs font-medium text-rose-800 mb-1">학교 행사명 <span class="text-slate-400 font-normal">(선택 입력)</span></label>
                     <input type="text" id="inputEventName" placeholder="예: 전국연합학력평가, 대수능모의평가, 개교기념일" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-rose-500">
                     <p class="text-[11px] text-rose-600/80 mt-1.5">* 학교 행사가 등록된 날은 참관 신청을 할 수 없게 됩니다.</p>
                 </div>
@@ -744,7 +744,7 @@
                         contentHtml += `
                             <div class="mt-1 p-1.5 bg-rose-50 border border-rose-200 text-rose-950 rounded leading-tight shadow-sm">
                                 <div class="font-bold text-xs text-rose-600 truncate"><i class="fa-solid fa-flag text-[10px] mr-1"></i>[행사]</div>
-                                <div class="text-[11px] font-bold text-slate-800 mt-0.5 truncate">${schedule.eventName}</div>
+                                <div class="text-[11px] font-bold text-slate-800 mt-0.5 truncate">${schedule.eventName || ''}</div>
                                 <div class="text-[10px] text-rose-500 font-medium mt-0.5">참관 불가</div>
                             </div>
                         `;
@@ -845,7 +845,8 @@
                 }
                 
                 if (schedule.isEvent) {
-                    alert(`선택하신 날짜는 학교 행사[${schedule.eventName}]가 지정되어 있어 수업 참관 신청을 진행할 수 없습니다.`);
+                    const eventTitle = schedule.eventName ? `[${schedule.eventName}]` : '';
+                    alert(`선택하신 날짜는 학교 행사${eventTitle}가 지정되어 있어 수업 참관 신청을 진행할 수 없습니다.`);
                     return;
                 }
 
@@ -953,10 +954,6 @@
 
             if (isEvent) {
                 const eventName = document.getElementById('inputEventName').value.trim();
-                if (!eventName) {
-                    alert('학교 행사명을 입력해주세요.');
-                    return;
-                }
 
                 const scheduleData = {
                     isEvent: true,
@@ -1094,7 +1091,8 @@
             }
 
             if (newSchedule.isEvent) {
-                alert(`선택하신 변경 일자는 학교 행사[${newSchedule.eventName}]가 지정된 날입니다. 참관 변경을 진행할 수 없습니다.`);
+                const eventTitle = newSchedule.eventName ? `[${newSchedule.eventName}]` : '';
+                alert(`선택하신 변경 일자는 학교 행사${eventTitle}가 지정된 날입니다. 참관 변경을 진행할 수 없습니다.`);
                 return;
             }
 
@@ -1267,10 +1265,11 @@
             tbody.innerHTML = monthKeys.map(date => {
                 const s = schedules[date];
                 if (s.isEvent) {
+                    const eventTitle = s.eventName ? ` ${s.eventName}` : '';
                     return `
                         <tr class="border-b border-slate-100 bg-rose-50/20 hover:bg-rose-50/50">
                             <td class="py-3 px-4 font-medium text-slate-700">${date}</td>
-                            <td class="py-3 px-4 text-rose-600 font-bold"><i class="fa-solid fa-flag text-xs mr-1"></i>[학교 행사] ${s.eventName}</td>
+                            <td class="py-3 px-4 text-rose-600 font-bold"><i class="fa-solid fa-flag text-xs mr-1"></i>[학교 행사]${eventTitle}</td>
                             <td class="py-3 px-4 text-slate-400 font-medium">-</td>
                             <td class="py-3 px-4 text-rose-500 font-medium">참관 불가 (학교 행사)</td>
                         </tr>
@@ -1379,7 +1378,8 @@
 
                         if (schedule) {
                             if (schedule.isEvent) {
-                                rowSubjects.push(`[행사] ${schedule.eventName || ""}`);
+                                const eventTitle = schedule.eventName ? ` ${schedule.eventName}` : "";
+                                rowSubjects.push(`[행사]${eventTitle}`);
                                 rowTeachers.push("-");
                                 rowClasses.push("-");
                                 rowPeriods.push("-");

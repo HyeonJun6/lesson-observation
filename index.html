@@ -68,8 +68,8 @@
             </div>
         </div>
 
-        <!-- Control Bar -->
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-wrap justify-between items-start gap-4">
+        <!-- Control Bar (레이아웃 수정: 좌-달력, 중-현황, 우-버튼) -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-wrap justify-between items-center gap-4">
             <!-- 좌측: 월 선택 달력 버튼 -->
             <div class="flex items-center gap-3">
                 <button onclick="changeMonth(-1)" class="px-3 py-1.5 bg-slate-100 hover:bg-indigo-100 hover:text-indigo-700 rounded-lg transition text-slate-700 font-bold text-sm flex items-center gap-1 border border-slate-200">
@@ -82,39 +82,38 @@
                 <button onclick="goToday()" class="px-3.5 py-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 rounded-md font-bold transition shadow-sm ml-2">오늘</button>
             </div>
 
-            <!-- 우측: 등록 교원 현황 박스 및 그 하단에 버튼 그룹 위치 -->
-            <div class="flex flex-col items-end gap-3">
-                <div class="flex items-center gap-6 bg-slate-50 border border-slate-100 px-5 py-2 rounded-xl">
-                    <div class="text-center">
-                        <span class="block text-xs text-slate-500 font-medium">등록 교원</span>
-                        <span id="countTeachers" class="text-lg font-bold text-indigo-600">0명</span>
-                    </div>
-                    <div class="h-6 w-px bg-slate-200"></div>
-                    <div class="text-center">
-                        <span class="block text-xs text-slate-500 font-medium">배정 수업</span>
-                        <span id="countClasses" class="text-lg font-bold text-emerald-600">0건</span>
-                    </div>
-                    <div class="h-6 w-px bg-slate-200"></div>
-                    <div class="text-center">
-                        <span class="block text-xs text-slate-500 font-medium">참관 신청 교원</span>
-                        <span id="countRequests" class="text-lg font-bold text-amber-600">0명</span>
-                    </div>
+            <!-- 중앙: 등록 교원 현황 박스 -->
+            <div class="flex items-center gap-6 bg-slate-50 border border-slate-100 px-5 py-2 rounded-xl my-1 sm:my-0">
+                <div class="text-center">
+                    <span class="block text-xs text-slate-500 font-medium">등록 교원</span>
+                    <span id="countTeachers" class="text-lg font-bold text-indigo-600">0명</span>
                 </div>
+                <div class="h-6 w-px bg-slate-200"></div>
+                <div class="text-center">
+                    <span class="block text-xs text-slate-500 font-medium">배정 수업</span>
+                    <span id="countClasses" class="text-lg font-bold text-emerald-600">0건</span>
+                </div>
+                <div class="h-6 w-px bg-slate-200"></div>
+                <div class="text-center">
+                    <span class="block text-xs text-slate-500 font-medium">참관 신청 교원</span>
+                    <span id="countRequests" class="text-lg font-bold text-amber-600">0명</span>
+                </div>
+            </div>
 
-                <div class="flex items-center gap-2 flex-wrap justify-end">
-                    <button id="btnTeacherManage" onclick="openTeacherManageModal()" class="hidden px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
-                        <i class="fa-solid fa-users-gear text-indigo-500"></i> 교직원 명단 및 신청 현황
-                    </button>
-                    <button onclick="openChangeRequestModal()" class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
-                        <i class="fa-solid fa-calendar-pen text-amber-600"></i> 참관 일자 변경 신청
-                    </button>
-                    <button onclick="openExcelExportModal()" class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
-                        <i class="fa-solid fa-file-excel text-emerald-500"></i> 엑셀 내보내기
-                    </button>
-                    <button id="btnResetData" onclick="openResetModal()" class="hidden px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
-                        <i class="fa-solid fa-trash-can text-rose-500"></i> 일정 데이터 초기화
-                    </button>
-                </div>
+            <!-- 우측: 버튼 그룹 -->
+            <div class="flex items-center gap-2 flex-wrap justify-end">
+                <button id="btnTeacherManage" onclick="openTeacherManageModal()" class="hidden px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-users-gear text-indigo-500"></i> 교직원 명단 및 신청 현황
+                </button>
+                <button onclick="openChangeRequestModal()" class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-calendar-pen text-amber-600"></i> 참관 일자 변경 신청
+                </button>
+                <button onclick="openExcelExportModal()" class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-file-excel text-emerald-500"></i> 엑셀 내보내기
+                </button>
+                <button id="btnResetData" onclick="openResetModal()" class="hidden px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-trash-can text-rose-500"></i> 일정 데이터 초기화
+                </button>
             </div>
         </div>
 
@@ -172,9 +171,9 @@
                     <thead>
                         <tr class="border-b-2 border-slate-200 text-slate-600 bg-slate-50/80 text-sm font-bold">
                             <th class="py-4 px-5 w-1/6">날짜</th>
-                            <th class="py-4 px-5 w-2/5">구분 및 정보</th>
-                            <th class="py-4 px-5 w-1/5">수업 진행 교사</th>
-                            <th class="py-4 px-5 w-1/4">참관 신청 명단 (신청/변경 일시)</th>
+                            <th class="py-4 px-5 w-1/3">구분 및 정보</th>
+                            <th class="py-4 px-5 w-1/6">수업 진행 교사</th>
+                            <th class="py-4 px-5 w-1/3">참관 신청 명단 (신청/변경 일시)</th>
                         </tr>
                     </thead>
                     <tbody id="scheduleTableBody">
@@ -1423,7 +1422,7 @@
         }
 
         // ==========================================
-        // 하단 테이블 목록 렌더링
+        // 9. 하단 테이블 목록 렌더링 (글자 크기 축소 및 2명 단위 줄바꿈 적용)
         // ==========================================
         function renderTable() {
             const tbody = document.getElementById('scheduleTableBody');
@@ -1454,16 +1453,17 @@
 
                 // 관리자 모드일 경우 취소 건을 포함하여 렌더링, 교사 모드일 경우 활성 건만 표시
                 const visibleObservers = (s.observers || []).filter(o => {
-                    if (currentRole === 'admin') return true; // 관리자는 전부 표시
+                    if (currentRole === 'admin') return true;
                     if (typeof o === 'string') return true;
-                    return !o.canceled; // 교사 모드는 취소 안 된 사람만
+                    return !o.canceled;
                 });
 
                 let obsText = '<span class="text-slate-400 font-normal">미신청</span>';
                 if (visibleObservers.length > 0) {
-                    obsText = visibleObservers.map(o => {
+                    const observerElements = visibleObservers.map(o => {
                         if (typeof o === 'string') return o;
-                        const timeTag = o.time ? `<span class="text-xs text-slate-500 font-normal">(${o.time})</span>` : '';
+                        // 신청 일시 글자 크기를 text-[10px]로 축소
+                        const timeTag = o.time ? `<span class="text-[10px] text-slate-500 font-normal">(${o.time})</span>` : '';
                         
                         if (o.canceled) {
                             const reasonStr = o.reason ? ` - 사유: ${o.reason}` : '';
@@ -1471,7 +1471,21 @@
                         }
                         
                         return `<span class="text-slate-800 font-bold">${o.name}</span> ${timeTag}`;
-                    }).join(', ');
+                    });
+
+                    // 2번째 선생님 뒤에서 줄바꿈(<br>) 적용 (2명 단위 정렬)
+                    let formattedHtml = '';
+                    observerElements.forEach((element, idx) => {
+                        if (idx > 0) {
+                            if (idx % 2 === 0) {
+                                formattedHtml += ',<br>';
+                            } else {
+                                formattedHtml += ', ';
+                            }
+                        }
+                        formattedHtml += element;
+                    });
+                    obsText = formattedHtml;
                 }
 
                 const locInfo = s.location ? ` [${s.location}]` : '';
@@ -1495,7 +1509,7 @@
         }
 
         // ==========================================
-        // 9. 엑셀 내보내기
+        // 10. 엑셀 내보내기
         // ==========================================
         function generateExcel() {
             const startM = parseInt(document.getElementById('exportStartMonth').value);

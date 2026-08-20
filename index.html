@@ -114,7 +114,7 @@
         <div id="noticeBanner" class="bg-indigo-50/70 border-l-4 border-indigo-600 p-3.5 rounded-r-xl flex justify-between items-center text-xs">
             <div class="flex items-center gap-2 text-indigo-900">
                 <i class="fa-solid fa-circle-info text-indigo-600 text-sm"></i>
-                <span id="noticeText">[교사 모드] 배정된 수업을 확인하고 날짜를 클릭하여 참관 신청을 진행하거나 변경 신청란을 통해 변경을 신청할 수 있습니다.</span>
+                <span id="noticeText">[교사 모드] 배정된 수업을 확인하고 날짜를 클릭하여 참관 신청/취소를 진행하거나 변경 신청을 이용할 수 있습니다.</span>
             </div>
             <span id="noticeBadge" class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full border border-amber-200/80 font-medium">권한 : 교사</span>
         </div>
@@ -147,7 +147,7 @@
             <div id="calendarDays" class="grid grid-cols-7 gap-px bg-slate-200 rounded-b-xl overflow-hidden"></div>
         </div>
 
-        <!-- Table Section (하단 상세 현황 목록 - 글자 크기 및 여백 확대) -->
+        <!-- Table Section -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
             <div class="mb-4 border-b border-slate-100 pb-3">
                 <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -256,23 +256,31 @@
         </div>
     </div>
 
-    <!-- Modal: 교사 참관 신청 -->
+    <!-- Modal: 교사 참관 신청 및 기존 참관 목록/취소 -->
     <div id="teacherApplyModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center z-50">
         <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-bold text-slate-800 text-base">수업 참관 신청</h3>
+                <h3 class="font-bold text-slate-800 text-base">수업 참관 신청 및 취소</h3>
                 <button onclick="closeModal('teacherApplyModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             
             <div id="applyClassInfo" class="bg-indigo-50 p-3 rounded-xl text-xs space-y-1 text-indigo-950 font-medium"></div>
 
-            <div>
-                <label class="block text-xs font-medium text-slate-600 mb-1">참관 교사 이름</label>
+            <!-- 기존 참관 신청자 목록 및 취소 기능 -->
+            <div class="space-y-1.5">
+                <label class="block text-xs font-medium text-slate-600">현재 참관 신청자 명단</label>
+                <div id="teacherModalObserverList" class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs space-y-1.5 max-h-36 overflow-y-auto">
+                    <p class="text-slate-400">신청 내역이 없습니다.</p>
+                </div>
+            </div>
+
+            <div class="border-t pt-3">
+                <label class="block text-xs font-medium text-slate-600 mb-1">신청 교사 이름</label>
                 <input type="text" id="inputObserverName" list="teacherDatalist" placeholder="신청자 성함을 선택하거나 입력하세요" class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
             </div>
 
             <div class="flex justify-end gap-2 pt-2">
-                <button onclick="closeModal('teacherApplyModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-lg font-medium">취소</button>
+                <button onclick="closeModal('teacherApplyModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-lg font-medium">닫기</button>
                 <button onclick="submitObservation()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-lg font-medium">참관 신청</button>
             </div>
         </div>
@@ -663,7 +671,7 @@
                 btnAdmin.className = "px-3 py-1.5 rounded-md transition font-medium text-indigo-300 hover:text-white";
                 roleBadge.className = "bg-amber-600 px-2 py-0.5 rounded text-white font-medium flex items-center gap-1";
                 roleText.innerText = "교사";
-                noticeText.innerText = "[교사 모드] 배정된 수업을 확인하고 날짜를 클릭하여 참관 신청을 진행하거나 변경 신청란을 통해 변경을 신청할 수 있습니다.";
+                noticeText.innerText = "[교사 모드] 배정된 수업을 확인하고 날짜를 클릭하여 참관 신청/취소를 진행하거나 변경 신청을 이용할 수 있습니다.";
                 noticeBadge.className = "bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full border border-amber-200/80 font-medium";
                 noticeBadge.innerText = "권한 : 교사";
                 adminUploadArea.classList.add('hidden');
@@ -750,12 +758,18 @@
                             </div>
                         `;
                     } else {
-                        const activeObservers = (schedule.observers || []).filter(o => !o.canceled);
+                        // 교사가 직접 취소한 내역은 완전히 제외
+                        const visibleObservers = (schedule.observers || []).filter(o => {
+                            if (typeof o === 'string') return true;
+                            return !(o.canceled && o.reason === '교사 직접 취소');
+                        });
+
+                        const activeObservers = visibleObservers.filter(o => typeof o === 'string' || !o.canceled);
                         const hasObservers = activeObservers.length > 0;
                         
                         let obsListText = "";
-                        if (schedule.observers && schedule.observers.length > 0) {
-                            obsListText = schedule.observers.map(o => {
+                        if (visibleObservers.length > 0) {
+                            obsListText = visibleObservers.map(o => {
                                 const name = typeof o === 'string' ? o : o.name;
                                 if (o.canceled) {
                                     return `<span class="line-through text-slate-400 font-normal">${name}</span>`;
@@ -859,8 +873,71 @@
                     <div>수업: ${schedule.subject} - ${schedule.teacher} 선생님 (${schedule.gradeClass}${loc})</div>
                 `;
                 document.getElementById('inputObserverName').value = '';
+
+                // 교사 참관 모달 내 기존 참관 목록 렌더링
+                renderTeacherModalObserverList();
+
                 document.getElementById('teacherApplyModal').classList.remove('hidden');
             }
+        }
+
+        // 교사 모달 내 참관자 명단 및 취소 버튼 렌더링 (취소 건 제외)
+        function renderTeacherModalObserverList() {
+            const container = document.getElementById('teacherModalObserverList');
+            const schedule = schedules[selectedDateKey];
+            const observers = schedule ? (schedule.observers || []) : [];
+
+            // 취소된 내역은 모달 목록에서 필터링
+            const activeObservers = observers.map((obs, originalIndex) => ({ obs, originalIndex }))
+                                            .filter(item => {
+                                                if (typeof item.obs === 'string') return true;
+                                                return !item.obs.canceled;
+                                            });
+
+            if (activeObservers.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 font-normal">신청 내역이 없습니다.</p>`;
+                return;
+            }
+
+            container.innerHTML = activeObservers.map(item => {
+                const name = typeof item.obs === 'string' ? item.obs : item.obs.name;
+
+                return `
+                    <div class="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200">
+                        <span class="text-slate-800 font-bold">
+                            ${name} 선생님
+                        </span>
+                        <button onclick="cancelObservationByTeacher(${item.originalIndex}, '${name}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded text-xs font-semibold transition">
+                            신청 취소
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 교사가 직접 참관 신청 취소
+        function cancelObservationByTeacher(index, name) {
+            if (!confirm(`${name} 선생님의 참관 신청을 취소하시겠습니까?`)) return;
+
+            let currentObservers = schedules[selectedDateKey].observers || [];
+            const timestamp = getFormattedTimestamp();
+
+            if (typeof currentObservers[index] === 'string') {
+                currentObservers[index] = { name: name, time: timestamp, canceled: true, reason: '교사 직접 취소' };
+            } else {
+                currentObservers[index].canceled = true;
+                currentObservers[index].time = timestamp;
+                currentObservers[index].reason = '교사 직접 취소';
+            }
+
+            db.ref(`schedules/${selectedDateKey}/observers`).set(currentObservers, (error) => {
+                if (error) {
+                    alert('취소 처리에 실패했습니다.');
+                } else {
+                    alert(`${name} 선생님의 참관 신청이 취소되었습니다.`);
+                    renderTeacherModalObserverList();
+                }
+            });
         }
 
         function renderAdminObserverList() {
@@ -909,6 +986,17 @@
             const name = nameInput.value.trim();
             if (!name) {
                 alert('추가할 참관 교사 이름을 입력해주세요.');
+                return;
+            }
+
+            // 중복 검사 (관리자)
+            const isAlreadyActive = tempObservers.some(obs => {
+                const obsName = typeof obs === 'string' ? obs : obs.name;
+                return obsName === name && !(typeof obs === 'object' && obs.canceled);
+            });
+
+            if (isAlreadyActive) {
+                alert(`⚠️ ${name} 선생님은 해당 일자에 이미 참관 신청되어 있습니다.`);
                 return;
             }
 
@@ -1022,6 +1110,7 @@
             }
         }
 
+        // 교사 참관 신청 제출 (동일 날짜 중복 참관 방지 적용)
         function submitObservation() {
             const observerName = document.getElementById('inputObserverName').value.trim();
             if (!observerName) {
@@ -1030,6 +1119,19 @@
             }
 
             let currentObservers = schedules[selectedDateKey].observers || [];
+
+            // 동일 날짜 중복 참관 방지 검사 (취소 상태가 아닌 기존 참관자 중 중복 확인)
+            const isAlreadyActive = currentObservers.some(o => {
+                const name = typeof o === 'string' ? o : o.name;
+                const isCanceled = typeof o === 'object' && o.canceled;
+                return name === observerName && !isCanceled;
+            });
+
+            if (isAlreadyActive) {
+                alert(`⚠️ ${observerName} 선생님은 해당 일자에 이미 참관 신청되어 있습니다.\n동일한 날짜에 중복하여 신청할 수 없습니다.`);
+                return;
+            }
+
             const timestamp = getFormattedTimestamp();
             currentObservers.push({ name: observerName, time: timestamp, reason: '', canceled: false });
 
@@ -1094,6 +1196,17 @@
             if (newSchedule.isEvent) {
                 const eventTitle = newSchedule.eventName ? `[${newSchedule.eventName}]` : '';
                 alert(`선택하신 변경 일자는 학교 행사${eventTitle}가 지정된 날입니다. 참관 변경을 진행할 수 없습니다.`);
+                return;
+            }
+
+            // 변경하려는 날짜에 이미 신청되어 있는지 확인
+            const isAlreadyInNewDate = (newSchedule.observers || []).some(o => {
+                const name = typeof o === 'string' ? o : o.name;
+                return name === teacherName && !o.canceled;
+            });
+
+            if (isAlreadyInNewDate) {
+                alert(`⚠️ ${teacherName} 선생님은 변경하려는 일자(${newDate})에 이미 참관 신청되어 있습니다.`);
                 return;
             }
 
@@ -1248,7 +1361,7 @@
         }
 
         // ==========================================
-        // 하단 테이블 목록 렌더링 (글자 크기 & 패딩 확대)
+        // 하단 테이블 목록 렌더링 (교사 직접 취소 건 필터링)
         // ==========================================
         function renderTable() {
             const tbody = document.getElementById('scheduleTableBody');
@@ -1277,17 +1390,22 @@
                     `;
                 }
 
+                // 교사 직접 취소 건을 제외하고 렌더링
+                const visibleObservers = (s.observers || []).filter(o => {
+                    if (typeof o === 'string') return true;
+                    return !(o.canceled && o.reason === '교사 직접 취소');
+                });
+
                 let obsText = '<span class="text-slate-500 font-normal">미신청</span>';
-                if (s.observers && s.observers.length > 0) {
-                    obsText = s.observers.map(o => {
+                if (visibleObservers.length > 0) {
+                    obsText = visibleObservers.map(o => {
                         if (typeof o === 'string') return o;
-                        const isCanceled = o.canceled;
-                        const strikeClass = isCanceled ? 'line-through text-slate-400' : 'text-slate-800 font-bold';
-                        const reasonText = o.reason ? `<span class="text-rose-500 text-xs font-normal"> (사유: ${o.reason})</span>` : '';
-                        const timeTag = o.time ? `<span class="text-xs text-slate-500 font-normal ${isCanceled ? 'line-through text-slate-300' : ''}">(${o.time})</span>` : '';
-                        return `<span class="${strikeClass}">${o.name}</span> ${timeTag}${reasonText}`;
+                        const timeTag = o.time ? `<span class="text-xs text-slate-500 font-normal">(${o.time})</span>` : '';
+                        const isCanceledStyle = o.canceled ? 'line-through text-slate-400 font-normal' : 'text-slate-800 font-bold';
+                        return `<span class="${isCanceledStyle}">${o.name}</span> ${timeTag}`;
                     }).join(', ');
                 }
+
                 const locInfo = s.location ? ` [${s.location}]` : '';
                 return `
                     <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition">
@@ -1395,7 +1513,7 @@
                                 let obsStr = "";
                                 if (schedule.observers && schedule.observers.length > 0) {
                                     obsStr = schedule.observers
-                                        .filter(o => typeof o === 'string' || !o.canceled)
+                                        .filter(o => typeof o === 'string' || !(o.canceled && o.reason === '교사 직접 취소'))
                                         .map(o => typeof o === 'string' ? o : o.name)
                                         .join(', ');
                                 }

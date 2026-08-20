@@ -69,44 +69,52 @@
         </div>
 
         <!-- Control Bar -->
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-wrap justify-between items-center gap-4">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-wrap justify-between items-start gap-4">
+            <!-- 좌측: 월 선택 달력 버튼 -->
             <div class="flex items-center gap-3">
-                <button onclick="changeMonth(-1)" class="p-2 hover:bg-slate-100 rounded-lg transition text-slate-600"><i class="fa-solid fa-chevron-left"></i></button>
-                <h2 id="calendarTitle" class="text-2xl font-bold text-slate-800 w-40 text-center">2026년 08월</h2>
-                <button onclick="changeMonth(1)" class="p-2 hover:bg-slate-100 rounded-lg transition text-slate-600"><i class="fa-solid fa-chevron-right"></i></button>
-                <button onclick="goToday()" class="px-3.5 py-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 rounded-md font-bold transition shadow-sm">오늘</button>
+                <button onclick="changeMonth(-1)" class="px-3 py-1.5 bg-slate-100 hover:bg-indigo-100 hover:text-indigo-700 rounded-lg transition text-slate-700 font-bold text-sm flex items-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-chevron-left text-xs"></i> &lt; 이전달
+                </button>
+                <h2 id="calendarTitle" class="text-2xl font-bold text-slate-800 w-44 text-center">2026년 08월</h2>
+                <button onclick="changeMonth(1)" class="px-3 py-1.5 bg-slate-100 hover:bg-indigo-100 hover:text-indigo-700 rounded-lg transition text-slate-700 font-bold text-sm flex items-center gap-1 border border-slate-200">
+                    다음달 &gt; <i class="fa-solid fa-chevron-right text-xs"></i>
+                </button>
+                <button onclick="goToday()" class="px-3.5 py-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 rounded-md font-bold transition shadow-sm ml-2">오늘</button>
             </div>
 
-            <div class="flex items-center gap-6 bg-slate-50 border border-slate-100 px-5 py-2 rounded-xl">
-                <div class="text-center">
-                    <span class="block text-xs text-slate-500 font-medium">등록 교원</span>
-                    <span id="countTeachers" class="text-lg font-bold text-indigo-600">0명</span>
+            <!-- 우측: 등록 교원 현황 박스 및 그 하단에 버튼 그룹 위치 -->
+            <div class="flex flex-col items-end gap-3">
+                <div class="flex items-center gap-6 bg-slate-50 border border-slate-100 px-5 py-2 rounded-xl">
+                    <div class="text-center">
+                        <span class="block text-xs text-slate-500 font-medium">등록 교원</span>
+                        <span id="countTeachers" class="text-lg font-bold text-indigo-600">0명</span>
+                    </div>
+                    <div class="h-6 w-px bg-slate-200"></div>
+                    <div class="text-center">
+                        <span class="block text-xs text-slate-500 font-medium">배정 수업</span>
+                        <span id="countClasses" class="text-lg font-bold text-emerald-600">0건</span>
+                    </div>
+                    <div class="h-6 w-px bg-slate-200"></div>
+                    <div class="text-center">
+                        <span class="block text-xs text-slate-500 font-medium">참관 신청 교원</span>
+                        <span id="countRequests" class="text-lg font-bold text-amber-600">0명</span>
+                    </div>
                 </div>
-                <div class="h-6 w-px bg-slate-200"></div>
-                <div class="text-center">
-                    <span class="block text-xs text-slate-500 font-medium">배정 수업</span>
-                    <span id="countClasses" class="text-lg font-bold text-emerald-600">0건</span>
-                </div>
-                <div class="h-6 w-px bg-slate-200"></div>
-                <div class="text-center">
-                    <span class="block text-xs text-slate-500 font-medium">참관 신청 교원</span>
-                    <span id="countRequests" class="text-lg font-bold text-amber-600">0명</span>
-                </div>
-            </div>
 
-            <div class="flex items-center gap-2">
-                <button id="btnTeacherManage" onclick="openTeacherManageModal()" class="hidden px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
-                    <i class="fa-solid fa-users-gear text-indigo-500"></i> 교직원 명단 관리
-                </button>
-                <button onclick="openChangeRequestModal()" class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
-                    <i class="fa-solid fa-calendar-pen text-amber-600"></i> 참관 일자 변경 신청
-                </button>
-                <button onclick="openExcelExportModal()" class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
-                    <i class="fa-solid fa-file-excel text-emerald-500"></i> 엑셀 내보내기
-                </button>
-                <button id="btnResetData" onclick="openResetModal()" class="hidden px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
-                    <i class="fa-solid fa-trash-can text-rose-500"></i> 일정 데이터 초기화
-                </button>
+                <div class="flex items-center gap-2 flex-wrap justify-end">
+                    <button id="btnTeacherManage" onclick="openTeacherManageModal()" class="hidden px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-users-gear text-indigo-500"></i> 교직원 명단 및 신청 현황
+                    </button>
+                    <button onclick="openChangeRequestModal()" class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-calendar-pen text-amber-600"></i> 참관 일자 변경 신청
+                    </button>
+                    <button onclick="openExcelExportModal()" class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-file-excel text-emerald-500"></i> 엑셀 내보내기
+                    </button>
+                    <button id="btnResetData" onclick="openResetModal()" class="hidden px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/60 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-trash-can text-rose-500"></i> 일정 데이터 초기화
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -149,11 +157,14 @@
 
         <!-- Table Section -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
-            <div class="mb-4 border-b border-slate-100 pb-3">
+            <div class="mb-4 border-b border-slate-100 pb-3 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <i class="fa-solid fa-list-check text-indigo-600"></i>
                     월별 상세 참관 현황 목록
                 </h3>
+                <span id="adminTableNotice" class="hidden text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full font-medium">
+                    <i class="fa-solid fa-eye mr-1"></i>관리자 모드: 교사가 직접 취소한 건도 목록에 노출됩니다.
+                </span>
             </div>
 
             <div class="overflow-x-auto">
@@ -232,7 +243,7 @@
 
                 <div class="pt-3 border-t">
                     <label class="block text-xs font-medium text-slate-700 mb-1.5 flex justify-between items-center">
-                        <span><i class="fa-solid fa-user-pen text-indigo-500 mr-1"></i> 참관 신청자 관리</span>
+                        <span><i class="fa-solid fa-user-pen text-indigo-500 mr-1"></i> 참관 신청자 관리 (취소 건 포함)</span>
                     </label>
                     <div class="flex gap-1.5 mb-2">
                         <input type="text" id="inputAdminAddObserver" list="teacherDatalist" placeholder="추가할 참관 교사명 선택/입력" class="flex-1 text-xs p-2 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
@@ -327,20 +338,38 @@
         </div>
     </div>
 
-    <!-- Modal: 교직원 명단 관리 -->
+    <!-- Modal: 교직원 명단 및 신청 현황 관리 -->
     <div id="teacherManageModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center z-50">
-        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl space-y-4">
+        <div class="bg-white w-full max-w-lg rounded-2xl p-6 shadow-xl space-y-4">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-bold text-slate-800 text-base">교직원 명단 관리</h3>
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-users-gear text-indigo-600"></i>
+                    교직원 명단 및 참관 신청 현황
+                </h3>
                 <button onclick="closeModal('teacherManageModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            
+
+            <!-- 신규 등록 입력창 -->
             <div class="flex gap-2">
-                <input type="text" id="newTeacherName" placeholder="이름 입력" class="flex-1 text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
+                <input type="text" id="newTeacherName" placeholder="신규 교사 이름 입력" class="flex-1 text-xs p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500">
                 <button onclick="addTeacherName()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-lg font-medium">추가</button>
             </div>
 
-            <div class="border rounded-xl p-3 max-h-60 overflow-y-auto space-y-1.5" id="teacherBadgeContainer"></div>
+            <!-- 신청 상태 범례 안내 -->
+            <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs">
+                <div class="flex items-center gap-3">
+                    <span class="flex items-center gap-1.5 font-bold text-indigo-900">
+                        <span class="w-3 h-3 rounded bg-indigo-600 inline-block"></span> 신청 완료
+                    </span>
+                    <span class="flex items-center gap-1.5 font-medium text-slate-500">
+                        <span class="w-3 h-3 rounded bg-slate-200 inline-block"></span> 미신청
+                    </span>
+                </div>
+                <span id="teacherApplyStatusCount" class="font-bold text-indigo-600">신청 0명 / 전체 0명</span>
+            </div>
+
+            <!-- 교직원 목록 배지 컨테이너 -->
+            <div class="border rounded-xl p-3 max-h-64 overflow-y-auto space-y-1.5" id="teacherBadgeContainer"></div>
 
             <div class="flex justify-end pt-2">
                 <button onclick="closeModal('teacherManageModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-lg font-medium">닫기</button>
@@ -654,6 +683,7 @@
             const adminUploadArea = document.getElementById('adminFormUploadArea');
             const btnResetData = document.getElementById('btnResetData');
             const btnTeacherManage = document.getElementById('btnTeacherManage');
+            const adminTableNotice = document.getElementById('adminTableNotice');
 
             if (role === 'admin') {
                 btnAdmin.className = "px-3 py-1.5 rounded-md transition font-medium text-white bg-indigo-600 shadow-sm";
@@ -666,6 +696,7 @@
                 adminUploadArea.classList.remove('hidden');
                 btnResetData.classList.remove('hidden');
                 btnTeacherManage.classList.remove('hidden');
+                adminTableNotice.classList.remove('hidden');
             } else {
                 btnTeacher.className = "px-3 py-1.5 rounded-md transition font-medium text-white bg-indigo-600 shadow-sm";
                 btnAdmin.className = "px-3 py-1.5 rounded-md transition font-medium text-indigo-300 hover:text-white";
@@ -677,6 +708,7 @@
                 adminUploadArea.classList.add('hidden');
                 btnResetData.classList.add('hidden');
                 btnTeacherManage.classList.add('hidden');
+                adminTableNotice.classList.add('hidden');
             }
             renderCalendar();
             renderDocumentForms();
@@ -758,22 +790,14 @@
                             </div>
                         `;
                     } else {
-                        // 교사가 직접 취소한 내역은 완전히 제외
-                        const visibleObservers = (schedule.observers || []).filter(o => {
-                            if (typeof o === 'string') return true;
-                            return !(o.canceled && o.reason === '교사 직접 취소');
-                        });
-
-                        const activeObservers = visibleObservers.filter(o => typeof o === 'string' || !o.canceled);
+                        // 일반 교사 화면 달력에서는 취소된 교사를 제외하고 표시
+                        const activeObservers = (schedule.observers || []).filter(o => typeof o === 'string' || !o.canceled);
                         const hasObservers = activeObservers.length > 0;
                         
                         let obsListText = "";
-                        if (visibleObservers.length > 0) {
-                            obsListText = visibleObservers.map(o => {
+                        if (activeObservers.length > 0) {
+                            obsListText = activeObservers.map(o => {
                                 const name = typeof o === 'string' ? o : o.name;
-                                if (o.canceled) {
-                                    return `<span class="line-through text-slate-400 font-normal">${name}</span>`;
-                                }
                                 if (o.isMoved) {
                                     return `<span>${name}</span><span class="text-[10px] text-amber-700 font-normal ml-0.5">(${o.time || '변경'})</span>`;
                                 }
@@ -940,6 +964,7 @@
             });
         }
 
+        // 관리자 모달 내 취소 내역 표시 및 편집 지원
         function renderAdminObserverList() {
             const container = document.getElementById('adminObserverContainer');
             if (!tempObservers || tempObservers.length === 0) {
@@ -949,19 +974,20 @@
 
             container.innerHTML = tempObservers.map((obs, idx) => {
                 const name = typeof obs === 'string' ? obs : obs.name;
-                const isCanceled = obs.canceled;
-                const reasonText = obs.reason ? `<span class="text-rose-600 block text-[10px] mt-0.5">ㄴ 사유: ${obs.reason}</span>` : '';
+                const isCanceled = typeof obs === 'object' && obs.canceled;
+                const reasonText = (typeof obs === 'object' && obs.reason) ? `<span class="text-rose-600 block text-[10px] mt-0.5">ㄴ 취소/변경 사유: ${obs.reason}</span>` : '';
 
                 return `
-                    <div class="bg-white p-2.5 rounded-lg border flex flex-col gap-1">
+                    <div class="bg-white p-2.5 rounded-lg border flex flex-col gap-1 ${isCanceled ? 'bg-slate-50 border-slate-200' : ''}">
                         <div class="flex justify-between items-center">
                             <div>
                                 <span class="font-bold ${isCanceled ? 'line-through text-slate-400' : 'text-slate-800'}">${name} 선생님</span>
-                                ${obs.time ? `<span class="text-[10px] ${isCanceled ? 'line-through text-slate-300' : 'text-slate-400'} ml-1">(${obs.time})</span>` : ''}
+                                ${(typeof obs === 'object' && obs.time) ? `<span class="text-[10px] ${isCanceled ? 'line-through text-slate-300' : 'text-slate-400'} ml-1">(${obs.time})</span>` : ''}
+                                ${isCanceled ? `<span class="ml-1 text-[10px] bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded font-bold">취소됨</span>` : ''}
                             </div>
                             <div class="flex gap-1">
-                                <button onclick="toggleCancelObserverAdmin(${idx})" class="px-2 py-0.5 ${isCanceled ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'} rounded text-[11px] font-medium">${isCanceled ? '취소 해제' : '취소선 처리'}</button>
-                                <button onclick="setObserverReasonAdmin(${idx})" class="px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded text-[11px] font-medium">사유 입력</button>
+                                <button onclick="toggleCancelObserverAdmin(${idx})" class="px-2 py-0.5 ${isCanceled ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600' : 'bg-amber-50 hover:bg-amber-100 text-amber-600'} rounded text-[11px] font-medium">${isCanceled ? '취소 복구' : '취소선 처리'}</button>
+                                <button onclick="setObserverReasonAdmin(${idx})" class="px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded text-[11px] font-medium">사유 수정</button>
                                 <button onclick="deleteObserverAdmin(${idx})" class="px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded text-[11px] font-medium">삭제</button>
                             </div>
                         </div>
@@ -974,9 +1000,10 @@
         function toggleCancelObserverAdmin(index) {
             const obs = tempObservers[index];
             if (typeof obs === 'string') {
-                tempObservers[index] = { name: obs, time: getFormattedTimestamp(), canceled: true, reason: '' };
+                tempObservers[index] = { name: obs, time: getFormattedTimestamp(), canceled: true, reason: '관리자 취소 처리' };
             } else {
                 obs.canceled = !obs.canceled;
+                if (!obs.canceled) obs.reason = '';
             }
             renderAdminObserverList();
         }
@@ -1034,7 +1061,7 @@
         }
 
         function deleteObserverAdmin(index) {
-            if (confirm("해당 참관 신청을 삭제하시겠습니까? (저장 버튼을 눌러야 최종 반영됩니다)")) {
+            if (confirm("해당 참관 신청을 완전히 삭제하시겠습니까? (저장 버튼을 눌러야 최종 반영됩니다)")) {
                 tempObservers.splice(index, 1);
                 renderAdminObserverList();
             }
@@ -1110,7 +1137,7 @@
             }
         }
 
-        // 교사 참관 신청 제출 (동일 날짜 중복 참관 방지 적용)
+        // 교사 참관 신청 제출
         function submitObservation() {
             const observerName = document.getElementById('inputObserverName').value.trim();
             if (!observerName) {
@@ -1269,29 +1296,64 @@
 
         function renderTeacherBadges() {
             const container = document.getElementById('teacherBadgeContainer');
+            
+            // 현재 등록된 전체 참관 신청 교원 목록 수집 (취소되지 않은 유효 신청자)
+            const appliedTeacherSet = new Set();
+            Object.keys(schedules).forEach(date => {
+                const sch = schedules[date];
+                if (sch && !sch.isEvent && sch.observers) {
+                    sch.observers.forEach(obs => {
+                        if (typeof obs === 'string') {
+                            appliedTeacherSet.add(obs);
+                        } else if (!obs.canceled) {
+                            appliedTeacherSet.add(obs.name);
+                        }
+                    });
+                }
+            });
+
             document.getElementById('countTeachers').innerText = `${teachers.length}명`;
             
+            let appliedCount = 0;
+            teachers.forEach(name => {
+                if (appliedTeacherSet.has(name)) appliedCount++;
+            });
+
+            document.getElementById('teacherApplyStatusCount').innerText = `신청 ${appliedCount}명 / 전체 ${teachers.length}명 (미신청 ${teachers.length - appliedCount}명)`;
+
             if (teachers.length === 0) {
                 container.innerHTML = '<p class="text-slate-400 text-xs text-center py-2">등록된 교직원이 없습니다.</p>';
                 return;
             }
 
-            container.innerHTML = teachers.map((name, index) => `
-                <div class="flex justify-between items-center bg-slate-100 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700">
-                    <span class="font-semibold">${name}</span>
-                    <div class="flex items-center gap-1">
-                        <button onclick="moveTeacher(${index}, -1)" ${index === 0 ? 'disabled class="text-slate-300 px-1"' : 'class="text-slate-600 hover:text-indigo-600 px-1"'}>
-                            <i class="fa-solid fa-chevron-up text-xs"></i>
-                        </button>
-                        <button onclick="moveTeacher(${index}, 1)" ${index === teachers.length - 1 ? 'disabled class="text-slate-300 px-1"' : 'class="text-slate-600 hover:text-indigo-600 px-1"'}>
-                            <i class="fa-solid fa-chevron-down text-xs"></i>
-                        </button>
-                        <button onclick="removeTeacherName(${index})" class="text-rose-500 hover:text-rose-700 ml-2">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
+            container.innerHTML = teachers.map((name, index) => {
+                const isApplied = appliedTeacherSet.has(name);
+                
+                // 참관 신청한 사람은 볼드 + 파란색 배경 하이라이트
+                const bgStyle = isApplied 
+                    ? 'bg-indigo-100/90 border border-indigo-300 font-extrabold text-indigo-950 shadow-sm' 
+                    : 'bg-slate-100 border border-slate-200 text-slate-600 font-normal';
+
+                return `
+                    <div class="flex justify-between items-center px-3 py-2 rounded-lg text-xs transition ${bgStyle}">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm">${name}</span>
+                            ${isApplied ? '<span class="text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full font-bold">참관 신청함</span>' : '<span class="text-[10px] text-slate-400">미신청</span>'}
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button onclick="moveTeacher(${index}, -1)" ${index === 0 ? 'disabled class="text-slate-300 px-1"' : 'class="text-slate-500 hover:text-indigo-600 px-1"'}>
+                                <i class="fa-solid fa-chevron-up text-xs"></i>
+                            </button>
+                            <button onclick="moveTeacher(${index}, 1)" ${index === teachers.length - 1 ? 'disabled class="text-slate-300 px-1"' : 'class="text-slate-500 hover:text-indigo-600 px-1"'}>
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </button>
+                            <button onclick="removeTeacherName(${index})" class="text-rose-500 hover:text-rose-700 ml-2">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function moveTeacher(index, direction) {
@@ -1361,7 +1423,7 @@
         }
 
         // ==========================================
-        // 하단 테이블 목록 렌더링 (교사 직접 취소 건 필터링)
+        // 하단 테이블 목록 렌더링
         // ==========================================
         function renderTable() {
             const tbody = document.getElementById('scheduleTableBody');
@@ -1390,19 +1452,25 @@
                     `;
                 }
 
-                // 교사 직접 취소 건을 제외하고 렌더링
+                // 관리자 모드일 경우 취소 건을 포함하여 렌더링, 교사 모드일 경우 활성 건만 표시
                 const visibleObservers = (s.observers || []).filter(o => {
+                    if (currentRole === 'admin') return true; // 관리자는 전부 표시
                     if (typeof o === 'string') return true;
-                    return !(o.canceled && o.reason === '교사 직접 취소');
+                    return !o.canceled; // 교사 모드는 취소 안 된 사람만
                 });
 
-                let obsText = '<span class="text-slate-500 font-normal">미신청</span>';
+                let obsText = '<span class="text-slate-400 font-normal">미신청</span>';
                 if (visibleObservers.length > 0) {
                     obsText = visibleObservers.map(o => {
                         if (typeof o === 'string') return o;
                         const timeTag = o.time ? `<span class="text-xs text-slate-500 font-normal">(${o.time})</span>` : '';
-                        const isCanceledStyle = o.canceled ? 'line-through text-slate-400 font-normal' : 'text-slate-800 font-bold';
-                        return `<span class="${isCanceledStyle}">${o.name}</span> ${timeTag}`;
+                        
+                        if (o.canceled) {
+                            const reasonStr = o.reason ? ` - 사유: ${o.reason}` : '';
+                            return `<span class="line-through text-slate-400 font-normal">${o.name} (취소됨${reasonStr})</span> ${timeTag}`;
+                        }
+                        
+                        return `<span class="text-slate-800 font-bold">${o.name}</span> ${timeTag}`;
                     }).join(', ');
                 }
 
@@ -1513,7 +1581,7 @@
                                 let obsStr = "";
                                 if (schedule.observers && schedule.observers.length > 0) {
                                     obsStr = schedule.observers
-                                        .filter(o => typeof o === 'string' || !(o.canceled && o.reason === '교사 직접 취소'))
+                                        .filter(o => typeof o === 'string' || !o.canceled)
                                         .map(o => typeof o === 'string' ? o : o.name)
                                         .join(', ');
                                 }
